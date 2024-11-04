@@ -6,7 +6,6 @@ $Config = @{
 'Credentials.VccApiKey' = ''
 'Url.Oauth_Token' = 'https://volvoid.eu.volvocars.com/as/token.oauth2'
 'Url.Oauth_Authorise' = 'https://volvoid.eu.volvocars.com/as/authorization.oauth2'
-'Url.Vehicles' = 'https://api.volvocars.com/connected-vehicle/v2/vehicles'
 'Car.Vin' = ''
 }
 
@@ -25,7 +24,6 @@ $Header = @{
 'content-type'= 'application/json; charset=utf-8'
 }
 
-#$UrlParameters = '?client_id=h4Yf0b&response_type=code&acr_values=urn:volvoid:aal:bronze:2sv&response_mode=pi.flow&scope=openid email profile care_by_volvo:financial_information:invoice:read care_by_volvo:financial_information:payment_method care_by_volvo:subscription:read customer:attributes customer:attributes:write order:attributes vehicle:attributes tsp_customer_api:all conve:brake_status conve:climatization_start_stop conve:command_accessibility conve:commands conve:diagnostics_engine_status conve:diagnostics_workshop conve:doors_status conve:engine_status conve:environment conve:fuel_status conve:honk_flash conve:lock conve:lock_status conve:navigation conve:odometer_status conve:trip_statistics conve:tyre_status conve:unlock conve:vehicle_relation conve:warnings conve:windows_status energy:battery_charge_level energy:charging_connection_status energy:charging_system_status energy:electric_range energy:estimated_charging_time energy:recharge_status vehicle:attributes'
 $UrlParameters = '?client_id=h4Yf0b&response_type=code&acr_values=urn:volvoid:aal:bronze:2sv&response_mode=pi.flow&scope=openid energy:battery_charge_level energy:charging_connection_status energy:charging_system_status energy:electric_range energy:estimated_charging_time energy:recharge_status'
 
 $AuthenticationRequestRaw = Invoke-WebRequest -Uri ($Config.'Url.Oauth_Authorise'+$UrlParameters) -Headers $Header -Method 'get' -SessionVariable AuthenticationRequestRawSession
@@ -118,15 +116,15 @@ $Token.ValidTimeToken = (Get-Date).AddSeconds($AuthenticationRefreshTokenJson.ex
 
 #Get car
 
-$Header = @{
+$CarData = Invoke-WebRequest `
+-Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
+-Method 'get' `
+-Headers @{
     'vcc-api-key' = $Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
     'content-type' = 'application/json'
     'accept' = '*/*'
     'authorization' = ('Bearer ' + $Token.AccessToken)
 }
-
-
-$CarData = Invoke-WebRequest -Uri "https://api.volvocars.com/energy/v1/vehicles/$($Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status" -Method 'get' -Headers $Header
 
 $CarDataJson = ($CarData.RawContent -split '(?:\r?\n){2,}')[1] | convertfrom-json
 
