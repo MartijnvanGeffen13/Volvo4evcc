@@ -1,40 +1,64 @@
-Function Load-TokenFromDisk
+Function Set-VolvoAuthentication
 {
 <#
 	.SYNOPSIS
-		Load Token data from disk, decrypt and convert to secure credential
+		Configure the secure credentials used by the module. Store this data encrypted on disk for later use
 	
 	.DESCRIPTION
-		Load Token data from disk, decrypt and convert to secure credential
+		Configure the secure credentials used by the module. Store this data encrypted on disk for later use
+        in the file called volvo4evccconfig.xml.  This data can only be loaded by the same user profile that 
+        create the encrypted file.
 	
 	.EXAMPLE
-		Load-TokenFromDisk
+		Set-VolvoAuthentication
+#>
+
+    [CmdletBinding()]
+    Param (       	
+    )
+    
+    $Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
+    $Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
+    $Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
+    $Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
+
+    Export-Clixml -InputObject $Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+    Write-Debug -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+
+    return $Config
+
+}
+
+Function Confirm-VolvoAuthentication
+{
+<#
+	.SYNOPSIS
+		Test if we still have valid cached tokens
+	
+	.DESCRIPTION
+		Test if we still have valid cached tokens that can be reused after reboot etc
+	
+	.EXAMPLE
+		Confirm-VolvoAuthentication
 #>
 
     [CmdletBinding()]
     Param (       	
     )
 
-    $Token = @{}
-    If (Test-Path -Path './AccessToken.txt') {
-        [System.Security.SecureString]$Token.AccessToken = Get-Content -Path './AccessToken.txt' | Convertto-SecureString
-    }else {
-        $Token.AccessToken = 'Not Found on Disk'
+
+    $OauthToken = Load-TokenFromDisk
+
+    If ($OauthToken.Source -eq 'Disk'){
+        Write-Debug -Message 'Token loaded from Disk succesfull'
+        Return $OauthToken
     }
-    If (Test-Path -Path './RefreshToken.txt') {
-        [System.Security.SecureString]$Token.RefreshToken = Get-Content -Path './RefreshToken.txt' | Convertto-SecureString
-    }else {
-        $Token.RefreshToken = 'Not Found on Disk'
-    }
-    If (Test-Path -Path './ValidTime.txt') {
-        $Token.ValidTimeToken = Get-Content -Path './ValidTime.txt' | Get-Date
-    }else {
-        $Token.ValidTimeToken = 'Not Found on Disk'
-    }
-    
-    If ($Token.AccessToken -ne 'Not Found on Disk' -and $Token.RefreshToken -ne 'Not Found on Disk' -and $Token.ValidTimeToken -ne 'Not Found on Disk'){
-        $Token.Source = 'Disk'
-    }
-            
-    return $Token
+
+    If ($OauthToken.Source -like 'Invalid*'){
+        Write-Debug -Message 'Token Cache issue need to refresh token'
+        $OauthToken = Initialize-VolvoAuthentication
+    } 
+
+
+    Return $OauthToken
 }
