@@ -19,4 +19,4 @@ Feature that should be done before we release a working state module:
 - Direct EVCC Yaml intergration without mqtt  **
 
 
-** are already in the MVP test 
+** are already in the MVP test.
