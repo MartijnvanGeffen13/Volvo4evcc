@@ -55,27 +55,8 @@ Function Initialize-VolvoAuthenticationOtpRequest
     )
 
     #Test if we loaded config allready if not load now
-    If ($Config){
-        If (-not($config.'credentials.username')){
-
-            #Force reload attempt from config
-            $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
-            
-            #Test again on reload
-            If (-not($config.'credentials.username')){
-                Write-Debug -Message 'Config variable found but no username key present after force reload'
-                Throw 'Please run Set-VolvoAuthentication first to configure this module'
-            }
-        }
-    }else{
-        If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml"){
-            Write-Debug -Message "$((Get-Location).path)\volvo4evccconfig.xml not found"
-            $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml"
-        }else{
-            Write-Debug -Message 'volvo4evccconfig.xml Does not exist'
-            Throw 'Please run Set-VolvoAuthentication first to configure this module'
-        }        
-    }
+    $Global:Config = Import-ConfigVariable
+    
 
     $StartHeader = @{
   
@@ -172,4 +153,77 @@ Function Set-Header
 
     return $NewHeader
 
+}
+
+Function Wait-UserOtpInput
+{
+<#
+	.SYNOPSIS
+		While the system has generated a OTP request we now need the user to provide it 
+        We will wait and attempt to harver the token for 5 minutes
+	
+	.DESCRIPTION
+		While the system has generated a OTP request we now need the user to provide it 
+        We will wait and attempt to harver the token for 5 minutes
+	
+	.EXAMPLE
+		Wait-UserOtpInput
+#>
+
+    [CmdletBinding()]
+    Param (       	
+    )
+
+    $Otp = Read-Host -AsSecureString -Prompt 'Please provide the OTP code sent to your email'
+
+    return $Otp
+}
+
+
+Function Import-ConfigVariable
+{
+<#
+	.SYNOPSIS
+		Import configuration form disk
+	
+	.DESCRIPTION
+		Import configuration form disk
+
+	.EXAMPLE
+		Import-ConfigVariable
+#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$False)]
+        [Switch]$Reload
+    )
+
+    If ($Reload){
+        $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
+        return $Config
+    }
+
+    If ($Config){
+        If (-not($config.'credentials.username')){
+
+            #Force reload attempt from config
+            $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
+            
+            #Test again on reload
+            If (-not($config.'credentials.username')){
+                Write-Debug -Message 'Config variable found but no username key present after force reload'
+                Throw 'Please run Set-VolvoAuthentication first to configure this module'
+            }
+        }
+    }else{
+        If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml"){
+            Write-Debug -Message "$((Get-Location).path)\volvo4evccconfig.xml not found"
+            $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+        }else{
+            Write-Debug -Message 'volvo4evccconfig.xml Does not exist'
+            Throw 'Please run Set-VolvoAuthentication first to configure this module'
+        }        
+    }
+
+    return $Config
 }

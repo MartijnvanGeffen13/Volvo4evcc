@@ -3,6 +3,7 @@ $Config = @{
     'Credentials.Username' = ''
     'Credentials.Password' = ''
     'Credentials.VccApiKey' = ''
+    'Credentials.Otp' = '111111'
     'Car.Vin' = ''
     'Url.Oauth_Token' = 'https://volvoid.eu.volvocars.com/as/token.oauth2'
     'Url.Oauth_Authorise' = 'https://volvoid.eu.volvocars.com/as/authorization.oauth2'
