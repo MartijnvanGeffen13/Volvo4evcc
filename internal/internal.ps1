@@ -17,7 +17,7 @@ Function Load-TokenFromDisk
 
     $Token = @{}
     If (Test-Path -Path './EncryptedOAuthToken.xml') {
-        [System.Security.SecureString]$Token.AccessToken = Get-Content -Path './AccessToken.txt' | Convertto-SecureString
+        $Token = Import-Clixml -Path './EncryptedOAuthToken.xml'
     }else {
         Write-Debug -Message 'Access Token Not found on disk'
         [String]$Token.AccessToken = 'Not Found on Disk'
@@ -102,6 +102,7 @@ Function Initialize-VolvoAuthenticationOtpRequest
 
         'CheckOtpUrl' =  $AuthenticationOtpReceivedJson._links.checkOtp.href + '?action=checkOtp'
         'Websession' = $AuthenticationRawSession
+        'Header' = $Header
 
     }
 
@@ -227,3 +228,89 @@ Function Import-ConfigVariable
 
     return $Config
 }
+
+
+Function Initialize-VolvoAuthenticationTradeOtpForOauth
+{
+<#
+	.SYNOPSIS
+		This will take the web session from the OTP, and the OTP URL as input and will trade the OTP for a Oauth token
+	
+	.DESCRIPTION
+		Trade OTP for Oauth token
+
+	.EXAMPLE
+		Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $AuthReturnObject
+#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)]
+        [hashtable]$AuthReturnObject
+    )
+
+    #Create new header variable so we can get rid of the hash table
+    $Header = $AuthReturnObject.Header  
+    $AuthenticationRawSession = $AuthReturnObject.Websession
+
+    $BodyOtp = @{'otp'= $Config.'Credentials.otp'} | ConvertTo-Json
+
+    #reset the OTP token on disk
+    Set-VolvoAuthentication -ResetOtpToken
+
+    $AuthenticationRequestSendOtp = Invoke-WebRequest -Uri $AuthReturnObject.CheckOtpUrl -Method 'post' -Body $BodyOtp -WebSession $AuthenticationRawSession -Headers $Header
+    Write-Debug -Message "OTP sent to server"
+   
+    #Clean up variables used with OTP data
+    Remove-Variable -Name 'BodyOtp'
+    Remove-Variable -Name 'AuthReturnObject'
+
+    $AuthenticationRequestSendOtpJson = $AuthenticationRequestSendOtp.Content | ConvertFrom-Json
+    $ContinueAuthenticationUrl = $AuthenticationRequestSendOtpJson._links.continueAuthentication.href + '?action=continueAuthentication'
+    
+    #Clean up variables used with OTP data
+    Remove-Variable -Name AuthenticationRequestSendOtp
+
+    Try{
+        #Not the best way to harvest the code but it will do for now as we need it encrypted
+        $AuthenticationAuthorizationCodeUnEncrypted = Invoke-WebRequest -Uri $ContinueAuthenticationUrl -Method 'get' -WebSession $AuthenticationRawSession -Headers $Header
+        $AuthenticationAuthorizationCodeEncrypted = ($AuthenticationAuthorizationCodeUnEncrypted.Content | ConvertFrom-Json).authorizeResponse.code | ConvertTo-SecureString -AsPlainText
+        Remove-variable -Name AuthenticationAuthorizationCodeUnEncrypted
+        Write-Debug -Message "Completed Authentication"
+    }catch {
+        Write-Debug -Message "Failed to securely harvest the authorization code"
+        Throw $_.Exception.Message
+    }
+    
+    #Get Oauth
+    Write-Debug -Message "Preparing Oauth request"
+
+    Set-Header -CurrentHeader $Header -HeaderParameter @{'content-type' = 'application/x-www-form-urlencoded'}
+
+    $AuthenticationRequestOauth = Invoke-WebRequest `
+    -Uri $Config.'Url.Oauth_Token' `
+    -Method 'post' `
+    -Body @{
+        'code' = $AuthenticationAuthorizationCodeEncrypted | ConvertFrom-SecureString -AsPlainText
+        'grant_type' = 'authorization_code'
+     } `
+    -WebSession $AuthenticationRawSession `
+    -Headers $Header
+
+    $AuthenticationRequestOauthJson =  $AuthenticationRequestOauth.Content | ConvertFrom-Json
+
+    #store
+    $Token = @{}
+    $Token.AccessToken = $AuthenticationRequestOauthJson.access_token |ConvertTo-SecureString -AsPlainText
+    $Token.RefreshToken = $AuthenticationRequestOauthJson.refresh_token |ConvertTo-SecureString -AsPlainText
+    $Token.ValidTimeToken = (Get-Date).AddSeconds( $AuthenticationRequestOauthJson.expires_in -120 )
+    $Token.Source = 'Fresh'
+
+    $Token | Export-Clixml -Path './EncryptedOAuthToken.xml'
+
+    #Remove variables used during oauth request 
+    Remove-Variable -Name AuthenticationRequestOauthJson
+    Remove-Variable -Name AuthenticationRequestOauth
+
+    return $Token
+}
+
