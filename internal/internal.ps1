@@ -37,7 +37,7 @@ Function Load-TokenFromDisk
     return $Token
 }
 
-Function Initialize-VolvoAuthentication
+Function Initialize-VolvoAuthenticationOtpRequest
 {
 <#
 	.SYNOPSIS
@@ -94,9 +94,37 @@ Function Initialize-VolvoAuthentication
     $AuthenticationFirstRequestRaw = Invoke-WebRequest -Uri ($Config.'Url.Oauth_Authorise'+$Config.'Url.Oauth_Claims') -Headers $Header -Method 'get' -SessionVariable AuthenticationRawSession
     $AuthenticationFirstRequestJson = $AuthenticationFirstRequestRaw.Content | ConvertFrom-Json
     
-    $AuthenticationRawSession
+    #Add required header for CheckUsernamePassword
+    $Header = Set-Header -CurrentHeader $Header -HeaderParameter @{'x-xsrf-header'='PingFederate'}
 
-    $AuthenticationFirstRequestJson
+    $CheckUsernamePasswordUrl = $AuthenticationFirstRequestJson._links.checkUsernamePassword.href + '?action=checkUsernamePassword'
+
+    #Purge Auth variable data from memory
+    Remove-Variable -Name AuthenticationFirstRequestJson
+    Remove-Variable -Name AuthenticationFirstRequestRaw
+
+    #Query URL without exposing a cred as variable
+    Write-Debug -Message "Initiate authentication with username and password to get OTP emailed"
+    $AuthenticationOtpReceived = Invoke-WebRequest `
+    -Uri $CheckUsernamePasswordUrl `
+    -Method 'post' `
+    -Body (@{
+        'username' = $Config.'Credentials.Username' | ConvertFrom-SecureString -AsPlainText
+        'password' = $Config.'Credentials.Password' | ConvertFrom-SecureString -AsPlainText
+    } | ConvertTo-Json) `
+    -WebSession $AuthenticationRawSession `
+    -Headers $Header
+
+    $AuthenticationOtpReceivedJson = $AuthenticationOtpReceived.content | ConvertFrom-Json
+
+    $AuthReturnObject = @{
+
+        'CheckOtpUrl' =  $AuthenticationOtpReceivedJson._links.checkOtp.href + '?action=checkOtp'
+        'Websession' = $AuthenticationRawSession
+
+    }
+
+    Return $AuthReturnObject
 }
 
 

@@ -54,11 +54,19 @@ Function Confirm-VolvoAuthentication
         Return $OauthToken
     }
 
-    If ($OauthToken.Source -like 'Invalid*'){
+    If ($OauthToken.Source -eq 'Invalid'){
         Write-Debug -Message 'Token Cache issue need to refresh token'
-        $OauthToken = Initialize-VolvoAuthentication
+        $OtpRequest = Initialize-VolvoAuthenticationOtpRequest
+
+        #continue to full token
     } 
 
+    If ($OauthToken.Source -eq 'Invalid-Expired'){
+        Write-Debug -Message 'Token load successfull but expired need new Access token'
+        
+
+        #continue to renew refresh token token
+    } 
 
     Return $OauthToken
 }
