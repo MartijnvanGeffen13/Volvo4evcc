@@ -24,8 +24,13 @@ Function Set-VolvoAuthentication
     [CmdletBinding()]
     Param (  
         
-        [Parameter(Mandatory=$False)]
-        [String]$OtpToken
+        [Parameter(Mandatory=$False,
+        ParametersetName = 'Default')]
+        [String]$OtpToken,
+
+        [Parameter(Mandatory=$False,
+        ParametersetName = 'Reset')]
+        [switch]$ResetOtpToken
 
     )
     
@@ -36,6 +41,16 @@ Function Set-VolvoAuthentication
 
         $Config.'Credentials.Otp' = $OtpToken
         Write-Debug -Message "Otp token writen to config"
+        
+        Export-Clixml -InputObject $Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+        Write-Debug -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+
+    }elseif ($PSBoundParameters.ContainsKey('ResetOtpToken') ) {
+
+        $Global:Config = Import-ConfigVariable -Reload
+
+        $Config.'Credentials.Otp' = '111111'
+        Write-Debug -Message "Otp token Reset in config"
         
         Export-Clixml -InputObject $Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-Debug -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
@@ -102,8 +117,9 @@ Function Confirm-VolvoAuthentication
             Write-Error -Message 'No OTP token provided'
             Throw 'No OTP token provided locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>" '
         }
-        #OTP has been picked up proceed
+        #OTP has been picked up Reset OTP token on disk
 
+        $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
     } 
 
     If ($OauthToken.Source -eq 'Invalid-Expired'){
@@ -115,3 +131,4 @@ Function Confirm-VolvoAuthentication
 
     Return $OauthToken
 }
+
