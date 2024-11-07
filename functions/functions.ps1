@@ -21,7 +21,7 @@ Function Set-VolvoAuthentication
 
 #>
 
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Default')]
     Param (  
         
         [Parameter(Mandatory=$False,
@@ -39,35 +39,35 @@ Function Set-VolvoAuthentication
         #First reload current config before exporting again could be other default session that was started
         $Global:Config = Import-ConfigVariable -Reload
 
-        $Config.'Credentials.Otp' = $OtpToken
+        $Global:Config.'Credentials.Otp' = $OtpToken
         Write-Debug -Message "Otp token writen to config"
         
-        Export-Clixml -InputObject $Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-Debug -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
     }elseif ($PSBoundParameters.ContainsKey('ResetOtpToken') ) {
 
         $Global:Config = Import-ConfigVariable -Reload
 
-        $Config.'Credentials.Otp' = '111111'
+        $Global:Config.'Credentials.Otp' = '111111'
         Write-Debug -Message "Otp token Reset in config"
         
-        Export-Clixml -InputObject $Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-Debug -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
     }else {
 
-        $Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
-        $Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
-        $Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
-        $Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
+        $Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
+        $Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
+        $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
+        $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
         #Reset OTP on every export
-        $Config.'Credentials.Otp' = '111111'
+        $Global:Config.'Credentials.Otp' = '111111'
         
-        Export-Clixml -InputObject $Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-Debug -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
-        return $Config
+        return $Global:Config
 
     }
 
@@ -90,8 +90,20 @@ Function Confirm-VolvoAuthentication
     Param (       	
     )
 
+    Try{
+        $OauthToken = Load-TokenFromDisk
+    } Catch {
+        Write-Error -Message "$($_.Exception.Message)"
+        Throw 'No token found on disk'
+    }
 
-    $OauthToken = Load-TokenFromDisk
+    Try{
+        $Global:Config = Import-ConfigVariable
+    } Catch {
+        Write-Error -Message "$($_.Exception.Message)"
+        Throw 'Could not load config'
+    }
+    
 
     If ($OauthToken.Source -eq 'Disk'){
         Write-Debug -Message 'Token loaded from Disk succesfull'
@@ -100,26 +112,44 @@ Function Confirm-VolvoAuthentication
 
     If ($OauthToken.Source -eq 'Invalid'){
         Write-Debug -Message 'Token Cache issue need to refresh full token'
-        $OtpRequest = Initialize-VolvoAuthenticationOtpRequest
+        Try{
+            #Reset disk token to make sure its default
+            Set-VolvoAuthentication -ResetOtpToken
+            $OtpRequest = Initialize-VolvoAuthenticationOtpRequest
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'OTP Request failed'
+        }
         
         Write-Host -ForegroundColor Yellow 'locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>"'
 
-        $Count =1
-        Do {
-            
-            $Global:Config = Import-ConfigVariable -Reload
-            Write-Host "Running wait for OTP loop $Count of 30"
-            $Count++
-            Start-Sleep -Seconds 10
-        } Until ($count -lt 30 -and $Config.'Credentials.Otp' -ne '111111')
+        try{
+            $Count =1
+            Do {
+                
+                $Global:Config = Import-ConfigVariable -Reload
+                Write-Host "Running wait for OTP loop $Count of 30"
+                $Count++
+                Write-Debug -Message  "Current OTP value: $($Global:Config.'Credentials.Otp')"
+                Start-Sleep -Seconds 10
+            } Until ($Count -lt 30 -and $Global:Config.'Credentials.Otp' -ne '111111')
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'OTP was not loaded form disk'
+        }
 
-        If ($Config.'Credentials.Otp' -eq '111111'){
+        If ($Global:Config.'Credentials.Otp' -eq '111111'){
             Write-Error -Message 'No OTP token provided'
             Throw 'No OTP token provided locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>" '
         }
         #OTP has been picked up Reset OTP token on disk
 
-        $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
+        Try{ 
+            $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'Could not trade OTP for Oauth token'
+        }
     } 
 
     If ($OauthToken.Source -eq 'Invalid-Expired'){
