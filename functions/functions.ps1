@@ -144,7 +144,12 @@ Function Confirm-VolvoAuthentication
         }
         #OTP has been picked up Reset OTP token on disk
 
-        $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
+        Try{ 
+            $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'Could not trade OTP for Oauth token'
+        }
     } 
 
     If ($OauthToken.Source -eq 'Invalid-Expired'){

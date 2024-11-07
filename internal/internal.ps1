@@ -291,7 +291,7 @@ Function Initialize-VolvoAuthenticationTradeOtpForOauth
     #Get Oauth
     Write-Debug -Message "Preparing Oauth request"
 
-    Set-Header -CurrentHeader $Header -HeaderParameter @{'content-type' = 'application/x-www-form-urlencoded'}
+    $Header = Set-Header -CurrentHeader $Header -HeaderParameter @{'content-type' = 'application/x-www-form-urlencoded'}
 
     $AuthenticationRequestOauth = Invoke-WebRequest `
     -Uri $Global:Config.'Url.Oauth_Token' `

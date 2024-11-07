@@ -8,7 +8,7 @@ $CarData = Invoke-WebRequest `
     'vcc-api-key' = $Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
     'content-type' = 'application/json'
     'accept' = '*/*'
-    'authorization' = ('Bearer ' + $Token.AccessToken)
+    'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
 }
 
 $CarDataJson = ($CarData.RawContent -split '(?:\r?\n){2,}')[1]
