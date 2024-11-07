@@ -321,3 +321,130 @@ Function Initialize-VolvoAuthenticationTradeOtpForOauth
     return $Token
 }
 
+
+Function Start-RestBrokerService
+{
+<#
+	.SYNOPSIS
+		This will start the web broker on local host
+	
+	.DESCRIPTION
+		This will start the web broker on local host using $Mydata and $OutputData as 
+        synchronised hash tables 
+
+	.EXAMPLE
+		Start-RestBrokerSercive
+#>
+    [CmdletBinding()]
+    Param (
+    )
+
+    $global:MyData = [hashtable]::Synchronized(@{})
+    $global:OutputData = [hashtable]::Synchronized(@{})
+
+    #On startup load last known data into web service
+    If(Test-Path -Path './MyData.xml'){
+        $global:MyData = Import-Clixml -Path './MyData.xml'
+    }Else{
+        $global:MyData.CarData = @{
+
+        }
+    }
+
+    $Runspace = @{}
+    $Runspace.runspace = [RunspaceFactory]::CreateRunspace()
+    $Runspace.runspace.ApartmentState = "STA"
+    $Runspace.runspace.ThreadOptions = "ReuseThread" 
+    #open runspace
+    $Runspace.runspace.Open()
+    $Runspace.psCmd = [PowerShell]::Create() 
+    $Runspace.runspace.SessionStateProxy.SetVariable("MyData",$MyData)
+    $Runspace.runspace.SessionStateProxy.SetVariable("OutputData",$OutputData)
+    $Runspace.psCmd.Runspace = $Runspace.runspace 
+
+    #add the scipt to the runspace
+    $Runspace.Handle = $Runspace.psCmd.AddScript({  
+        $HttpListener = New-Object System.Net.HttpListener
+        $HttpListener.Prefixes.Add('http://*:6060/')
+        $HttpListener.Start()
+        do {
+            $Context = $HttpListener.GetContext()
+            $Context.Response.StatusCode = 200
+            $Context.Response.ContentType = 'application/json'
+            $WebContent =  $MyData.Cardata
+            $EncodingWebContent = [System.Text.Encoding]::UTF8.GetBytes($WebContent)
+            $Context.Response.OutputStream.Write($EncodingWebContent , 0, $EncodingWebContent.Length)
+            $Context.Response.Close()
+            Write-Host "." -NoNewLine
+        } until ([System.Console]::KeyAvailable)
+    }).BeginInvoke()
+}
+
+Function Watch-VolvoCar
+{
+<#
+	.SYNOPSIS
+		This will start the web broker on local host
+	
+	.DESCRIPTION
+		This will start the web broker on local host using $Mydata and $OutputData as 
+        synchronised hash tables 
+
+	.EXAMPLE
+		Start-RestBrokerSercive
+#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)]
+        [hashtable]$Token
+    )
+
+    $CarData = Invoke-WebRequest `
+    -Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
+    -Method 'get' `
+    -Headers @{
+        'vcc-api-key' = $Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
+        'content-type' = 'application/json'
+        'accept' = '*/*'
+        'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
+    }
+
+    $CarDataJson = ($CarData.RawContent -split '(?:\r?\n){2,}')[1]
+    $Global:MyData.CarData = $CarDataJson
+
+}
+
+Function Get-EvccData
+{
+<#
+	.SYNOPSIS
+		This will get the EVCC data 
+	
+	.DESCRIPTION
+		This will get the EVCC data from your host to determine the intervalls 
+
+	.EXAMPLE
+		Get-EvccData
+#>
+    [CmdletBinding()]
+    Param (
+    )
+
+    $EvccData = @{}
+
+    Try {
+        $EvccDataRaw = Invoke-RestMethod -Uri "$($Global:Config.'Url.evcc')/api/state"
+        $EvccData.SourceOk = $True
+    }catch{
+        $EvccData.charging
+        $EvccData.SourceOk = $False
+    }
+
+    $EvccData.Connected = $EvccDataRaw.result.loadpoints.connected
+    $EvccData.Charging = $EvccDataRaw.result.loadpoints.charging
+
+    return $EvccData
+}
+
+
+

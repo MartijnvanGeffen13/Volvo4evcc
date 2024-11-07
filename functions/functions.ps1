@@ -61,6 +61,7 @@ Function Set-VolvoAuthentication
         $Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
         $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
         $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
+        $Global:Config.'Url.Evcc' = Read-Host -AsSecureString -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
         #Reset OTP on every export
         $Global:Config.'Credentials.Otp' = '111111'
         
@@ -161,4 +162,6 @@ Function Confirm-VolvoAuthentication
 
     Return $OauthToken
 }
+
+
 
