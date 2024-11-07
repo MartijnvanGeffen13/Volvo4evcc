@@ -71,8 +71,8 @@ Function Initialize-VolvoAuthenticationOtpRequest
     $Header = Set-Header -HeaderParameter $StartHeader
 
     #This should be the very first call to the service so we store it in a session variable for automatic handeling of the cookies
-    Write-Debug -Message "Initiate first web auth with claims to $(($Config.'Url.Oauth_Authorise'+$Config.'Url.Oauth_Claims'))"
-    $AuthenticationFirstRequestRaw = Invoke-WebRequest -Uri ($Config.'Url.Oauth_Authorise'+$Config.'Url.Oauth_Claims') -Headers $Header -Method 'get' -SessionVariable AuthenticationRawSession
+    Write-Debug -Message "Initiate first web auth with claims to $(($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims'))"
+    $AuthenticationFirstRequestRaw = Invoke-WebRequest -Uri ($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims') -Headers $Header -Method 'get' -SessionVariable AuthenticationRawSession
     $AuthenticationFirstRequestJson = $AuthenticationFirstRequestRaw.Content | ConvertFrom-Json
     
     #Add required header for CheckUsernamePassword
@@ -90,8 +90,8 @@ Function Initialize-VolvoAuthenticationOtpRequest
     -Uri $CheckUsernamePasswordUrl `
     -Method 'post' `
     -Body (@{
-        'username' = $Config.'Credentials.Username' | ConvertFrom-SecureString -AsPlainText
-        'password' = $Config.'Credentials.Password' | ConvertFrom-SecureString -AsPlainText
+        'username' = $Global:Config.'Credentials.Username' | ConvertFrom-SecureString -AsPlainText
+        'password' = $Global:Config.'Credentials.Password' | ConvertFrom-SecureString -AsPlainText
     } | ConvertTo-Json) `
     -WebSession $AuthenticationRawSession `
     -Headers $Header
@@ -120,7 +120,7 @@ Function Set-Header
 		Compare 2 headers and update the old one with new values or merge
 	
 	.EXAMPLE
-		Set-Header -CurrentHeader $Header -HeaderParameter $config
+		Set-Header -CurrentHeader $Header -HeaderParameter $Global:Config
 #>
 
     [CmdletBinding()]
@@ -200,18 +200,26 @@ Function Import-ConfigVariable
     )
 
     If ($Reload){
-        $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
-        return $Config
+        If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml" ) {
+            $Global:Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
+            return $Global:Config
+        }else{
+            Throw 'Please run Set-VolvoAuthentication first to configure this module'
+        }
     }
 
-    If ($Config){
-        If (-not($config.'credentials.username')){
+    If ($Global:Config){
+        If (-not($Global:Config.'credentials.username')){
 
             #Force reload attempt from config
-            $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
+            If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml" ) {
+                $Global:Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
+            }else{
+                Throw 'Please run Set-VolvoAuthentication first to configure this module'
+            }
             
             #Test again on reload
-            If (-not($config.'credentials.username')){
+            If (-not($Global:Config.'credentials.username')){
                 Write-Debug -Message 'Config variable found but no username key present after force reload'
                 Throw 'Please run Set-VolvoAuthentication first to configure this module'
             }
@@ -219,16 +227,15 @@ Function Import-ConfigVariable
     }else{
         If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml"){
             Write-Debug -Message "$((Get-Location).path)\volvo4evccconfig.xml not found"
-            $Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+            $Global:Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         }else{
             Write-Debug -Message 'volvo4evccconfig.xml Does not exist'
             Throw 'Please run Set-VolvoAuthentication first to configure this module'
         }        
     }
 
-    return $Config
+    return $Global:Config
 }
-
 
 Function Initialize-VolvoAuthenticationTradeOtpForOauth
 {
@@ -252,7 +259,7 @@ Function Initialize-VolvoAuthenticationTradeOtpForOauth
     $Header = $AuthReturnObject.Header  
     $AuthenticationRawSession = $AuthReturnObject.Websession
 
-    $BodyOtp = @{'otp'= $Config.'Credentials.otp'} | ConvertTo-Json
+    $BodyOtp = @{'otp'= $Global:Config.'Credentials.otp'} | ConvertTo-Json
 
     #reset the OTP token on disk
     Set-VolvoAuthentication -ResetOtpToken
@@ -287,7 +294,7 @@ Function Initialize-VolvoAuthenticationTradeOtpForOauth
     Set-Header -CurrentHeader $Header -HeaderParameter @{'content-type' = 'application/x-www-form-urlencoded'}
 
     $AuthenticationRequestOauth = Invoke-WebRequest `
-    -Uri $Config.'Url.Oauth_Token' `
+    -Uri $Global:Config.'Url.Oauth_Token' `
     -Method 'post' `
     -Body @{
         'code' = $AuthenticationAuthorizationCodeEncrypted | ConvertFrom-SecureString -AsPlainText
