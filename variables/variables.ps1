@@ -1,4 +1,4 @@
-$Config = @{
+$Global:Config = @{
 
     'Credentials.Username' = ''
     'Credentials.Password' = ''

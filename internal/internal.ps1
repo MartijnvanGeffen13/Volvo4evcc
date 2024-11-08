@@ -402,10 +402,10 @@ Function Watch-VolvoCar
     )
 
     $CarData = Invoke-WebRequest `
-    -Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
+    -Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
     -Method 'get' `
     -Headers @{
-        'vcc-api-key' = $Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
+        'vcc-api-key' = $Global:Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
         'content-type' = 'application/json'
         'accept' = '*/*'
         'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
@@ -476,7 +476,7 @@ Function Get-NewVolvoToken
 
     Try {
         $NewTokenRaw = Invoke-WebRequest `
-        -Uri $config.'Url.Oauth_Token'`
+        -Uri $Global:Config.'Url.Oauth_Token'`
         -Method 'post' `
         -Headers $Header `
         -Body @{
