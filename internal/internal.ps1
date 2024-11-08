@@ -311,6 +311,8 @@ Function Initialize-VolvoAuthenticationTradeOtpForOauth
     $Token.RefreshToken = $AuthenticationRequestOauthJson.refresh_token |ConvertTo-SecureString -AsPlainText
     $Token.ValidTimeToken = (Get-Date).AddSeconds( $AuthenticationRequestOauthJson.expires_in -120 )
     $Token.Source = 'Fresh'
+    #Dont need the session anymore
+    #$Token.Websession = $AuthenticationRawSession
 
     $Token | Export-Clixml -Path './EncryptedOAuthToken.xml'
 
@@ -446,5 +448,62 @@ Function Get-EvccData
     return $EvccData
 }
 
+Function Get-NewVolvoToken
+{
+<#
+	.SYNOPSIS
+		If we have a expired token we could attempt the refresh token
+	
+	.DESCRIPTION
+		If we have a expired token we could attempt the refresh token to get a new access token
+	
+	.EXAMPLE
+		Get-NewVolvoToken -Token $Token
+#>
 
+    [CmdletBinding()]
+    Param (     	
+        [Parameter(Mandatory=$true)]
+        [hashtable]$Token       
+    
+    )
+
+    $Header = Set-Header -HeaderParameter @{
+        'authorization' = 'Basic aDRZZjBiOlU4WWtTYlZsNnh3c2c1WVFxWmZyZ1ZtSWFEcGhPc3kxUENhVXNpY1F0bzNUUjVrd2FKc2U0QVpkZ2ZJZmNMeXc='
+        'content-type' = 'application/x-www-form-urlencoded'
+        'accept' = 'application/json'
+    }
+
+    Try {
+        $NewTokenRaw = Invoke-WebRequest `
+        -Uri $config.'Url.Oauth_Token'`
+        -Method 'post' `
+        -Headers $Header `
+        -Body @{
+            'grant_type' = 'refresh_token'
+            'refresh_token' = $Token.RefreshToken | ConvertFrom-SecureString -AsPlainText     
+        } 
+
+        $NewToken = $NewTokenRaw.Content | ConvertFrom-Json
+
+        $TempToken = @{}
+        $TempToken.AccessToken = $NewToken.access_token |ConvertTo-SecureString -AsPlainText
+        $TempToken.RefreshToken = $NewToken.refresh_token |ConvertTo-SecureString -AsPlainText
+        $TempToken.ValidTimeToken = (Get-Date).AddSeconds( $NewToken.expires_in -120 )
+        $TempToken.Source = 'Fresh'
+        #Dont need the session anymore
+        #$Token.Websession = $AuthenticationRawSession
+
+        $TempToken | Export-Clixml -Path './EncryptedOAuthToken.xml'
+
+    } Catch {
+    
+        Write-Debug -Message $ErrorMessage.ErrorDetails.Message
+        $ErrorMessage = $_
+        $Token.Source = 'Invalid-Expired'
+        Return $Token
+    }    
+
+    Return $TempToken
+}
 

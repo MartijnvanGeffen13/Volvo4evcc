@@ -111,7 +111,8 @@ Function Confirm-VolvoAuthentication
         Return $OauthToken
     }
 
-    If ($OauthToken.Source -eq 'Invalid'){
+    #Retest if expired needs full auth flow due to test issiue last time a
+    If ($OauthToken.Source -eq 'Invalid' -or $OauthToken.Source -eq 'Invalid-Expired'){
         Write-Debug -Message 'Token Cache issue need to refresh full token'
         Try{
             #Reset disk token to make sure its default
@@ -151,13 +152,6 @@ Function Confirm-VolvoAuthentication
             Write-Error -Message "$($_.Exception.Message)"
             Throw 'Could not trade OTP for Oauth token'
         }
-    } 
-
-    If ($OauthToken.Source -eq 'Invalid-Expired'){
-        Write-Debug -Message 'Token load successfull but expired need new Access token'
-        
-
-        #continue to renew refresh token token
     } 
 
     Return $OauthToken
