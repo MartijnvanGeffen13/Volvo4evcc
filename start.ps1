@@ -13,6 +13,18 @@ $Token = Confirm-VolvoAuthentication
 $Seconds = 60
 do 
 {
+    If ($Token.ValidTimeToken -lt (Get-date)){
+        $Token.Source = 'Invalid-Expired'
+        Write-Debug -Message 'Token is expired trying to get new one'
+
+        Try{
+            $Token = Get-NewVolvoToken -Token $Token
+            Write-Debug -Message 'Token is refreshed succesfully'
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'Could not get new token'
+        }
+    }
     #Get EvccData
     $EvccData = Get-EvccData
 
