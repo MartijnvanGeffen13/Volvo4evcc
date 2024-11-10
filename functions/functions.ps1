@@ -94,8 +94,17 @@ Function Start-Volvo4Evcc
     [CmdletBinding(DefaultParameterSetName = 'Default')]
     Param ()
 
-    #Start the web component in a runspace
-    Start-RestBrokerService
+    #Start the web component in a runspace Recycle old runspace if this exist to free up web port
+    $OldRunspace = Get-Runspace -name Volvo4evcc
+    If ($OldRunspace){
+        $OldRunspace.Close()
+        $OldRunspace.Dispose()
+        #Give system time to dispose
+        Start-Sleep -Seconds 5
+        Start-RestBrokerService
+    }else{
+        Start-RestBrokerService
+    }
 
     #Initialise first Token or test token on startup
     $Token = Confirm-VolvoAuthentication

@@ -355,6 +355,7 @@ Function Start-RestBrokerService
 
     $Runspace = @{}
     $Runspace.runspace = [RunspaceFactory]::CreateRunspace()
+    $Runspace.name = 'Volvo4EvccWebInstance'
     $Runspace.runspace.ApartmentState = "STA"
     $Runspace.runspace.ThreadOptions = "ReuseThread" 
     #open runspace
