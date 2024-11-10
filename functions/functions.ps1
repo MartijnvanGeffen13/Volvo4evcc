@@ -125,12 +125,14 @@ Function Start-Volvo4Evcc
         }
         #Get EvccData
         $EvccData = Get-EvccData
+        $MessageDone = $False
 
         If ($True -eq $EvccData.SourceOk){
             #Get Volvo data 2 times slower than every poll
             If ($true -eq $EvccData.Connected -and $true -eq $EvccData.Charging -and ($RunCount%1) -eq 0){
             
                 Write-Host -Message 'Connected - charging - Fast refresh of volvo SOC data'
+                $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
             #Get Volvo data 5 times slower than every poll
@@ -138,18 +140,21 @@ Function Start-Volvo4Evcc
                 #Also cycle web service
                 Reset-VolvoWebService
                 Write-Host -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
+                $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
             #Get Volvo data 5 times slower than every poll
             If ($false -eq $EvccData.Connected -and ($RunCount%59) -eq 0){
             
                 Write-Host -Message 'Not Connected - No refresh of volvo SOC data'
+                $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
             #Get Volvo data if this is the first poll
             If ($RunCount -eq 1){
             
                 Write-Host -Message "Startup with Connected:$($EvccData.Connected) - Charging:$($EvccData.Charging)"
+                $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
         }else{
@@ -158,7 +163,7 @@ Function Start-Volvo4Evcc
         }
         
         #Sleep till next run
-        If (($RunCount%5) -ne 0){
+        If ($False -eq $MessageDone){
             Write-Host -Message 'Just a Evcc pull and token test no action taken'
         }
 
