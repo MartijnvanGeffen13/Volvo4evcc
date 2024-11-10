@@ -4,7 +4,7 @@
     RootModule = 'Volvo4evcc.psm1'
     
     # Version number of this module.
-    ModuleVersion = '0.3'
+    ModuleVersion = '0.5'
     
     # ID used to uniquely identify this module
     GUID = '50047ffd-8482-4a42-94f3-52bbf7515d93'
@@ -27,11 +27,7 @@
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     FunctionsToExport = @(
         'Set-VolvoAuthentication'
-        'Confirm-VolvoAuthentication'
-        'Start-RestBrokerService'
-        'Get-EvccData'
-        'Watch-VolvoCar'
-        'Get-NewVolvoToken'
+        'Start-Volvo4Evcc'
     )
     
     # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.

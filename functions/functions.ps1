@@ -74,88 +74,86 @@ Function Set-VolvoAuthentication
 
 }
 
-Function Confirm-VolvoAuthentication
+Function Start-Volvo4Evcc
 {
 <#
 	.SYNOPSIS
-		Test if we still have valid cached tokens
+		This will start the module interactive
 	
 	.DESCRIPTION
-		Test if we still have valid cached tokens that can be reused after reboot etc
+		This will start the module interactive
 	
-	.EXAMPLE
-		Confirm-VolvoAuthentication
+
+    .EXAMPLE
+        Starts the module interactive
+
+        Start-Volvo4Evcc
+
 #>
 
-    [CmdletBinding()]
-    Param (       	
-    )
+    [CmdletBinding(DefaultParameterSetName = 'Default')]
+    Param ()
 
-    Try{
-        $OauthToken = Load-TokenFromDisk
-    } Catch {
-        Write-Error -Message "$($_.Exception.Message)"
-        Throw 'No token found on disk'
-    }
+    #Start the web component in a runspace
+    Start-RestBrokerService
 
-    Try{
-        $Global:Config = Import-ConfigVariable
-    } Catch {
-        Write-Error -Message "$($_.Exception.Message)"
-        Throw 'Could not load config'
-    }
-    
+    #Initialise first Token or test token on startup
+    $Token = Confirm-VolvoAuthentication
 
-    If ($OauthToken.Source -eq 'Disk'){
-        Write-Debug -Message 'Token loaded from Disk succesfull'
-        Return $OauthToken
-    }
+    #loop for timers
 
-    #Retest if expired needs full auth flow due to test issiue last time a
-    If ($OauthToken.Source -eq 'Invalid' -or $OauthToken.Source -eq 'Invalid-Expired'){
-        Write-Debug -Message 'Token Cache issue need to refresh full token'
-        Try{
-            #Reset disk token to make sure its default
-            Set-VolvoAuthentication -ResetOtpToken
-            $OtpRequest = Initialize-VolvoAuthenticationOtpRequest
-        } Catch {
-            Write-Error -Message "$($_.Exception.Message)"
-            Throw 'OTP Request failed'
+    #Wrap in loop based on evcc data
+    $Seconds = 60
+    $RunCount = 0
+    do 
+    {
+        #Increase run count
+        $RunCount++
+
+        #Check token validity and get new one if near expiration
+        If ($Token.ValidTimeToken -lt (Get-date).AddSeconds(-120)){
+            $Token.Source = 'Invalid-Expired'
+            Write-Debug -Message 'Token is expired trying to get new one'
+
+            Try{
+                $Token = Get-NewVolvoToken -Token $Token
+                Write-Debug -Message 'Token is refreshed succesfully'
+            } Catch {
+                Write-Error -Message "$($_.Exception.Message)"
+                Throw 'Could not get new token please restart with full auth and 2FA'
+            }
+        }
+        #Get EvccData
+        $EvccData = Get-EvccData
+
+        If ($True -eq $EvccData.SourceOk){
+            #Get Volvo data 2 times slower than every poll
+            If ($true -eq $EvccData.Connected -and $true -eq $EvccData.Charging -and ($RunCount%2) -eq 0){
+            
+                write-host -Message 'Connected - charging - Fast refresh of volvo SOC data'
+                Watch-VolvoCar -Token $Token
+            }
+            #Get Volvo data 5 times slower than every poll
+            If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%5) -eq 0){
+            
+                write-host -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
+                Watch-VolvoCar -Token $Token
+            }
+            #Get Volvo data 5 times slower than every poll
+            If ($false -eq $EvccData.Connected -and ($RunCount%60) -eq 0){
+            
+                write-host -Message 'Not Connected - No refresh of volvo SOC data'
+                Watch-VolvoCar -Token $Token
+            }
+
+        }else{
+            
+            Write-Debug -Message 'Evcc data not found or not reachable'
         }
         
-        Write-Host -ForegroundColor Yellow 'locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>"'
+        #Sleep till next run
+        Start-Sleep -Seconds $Seconds
+        
+    }while ($True) 
 
-        try{
-            $Count =1
-            Do {
-                
-                $Global:Config = Import-ConfigVariable -Reload
-                Write-Host "Running wait for OTP loop $Count of 30"
-                $Count++
-                Write-Debug -Message  "Current OTP value: $($Global:Config.'Credentials.Otp')"
-                Start-Sleep -Seconds 10
-            } Until ($Count -lt 30 -and $Global:Config.'Credentials.Otp' -ne '111111')
-        } Catch {
-            Write-Error -Message "$($_.Exception.Message)"
-            Throw 'OTP was not loaded form disk'
-        }
-
-        If ($Global:Config.'Credentials.Otp' -eq '111111'){
-            Write-Error -Message 'No OTP token provided'
-            Throw 'No OTP token provided locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>" '
-        }
-        #OTP has been picked up Reset OTP token on disk
-
-        Try{ 
-            $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
-        } Catch {
-            Write-Error -Message "$($_.Exception.Message)"
-            Throw 'Could not trade OTP for Oauth token'
-        }
-    } 
-
-    Return $OauthToken
 }
-
-
-

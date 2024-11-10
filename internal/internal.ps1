@@ -507,3 +507,85 @@ Function Get-NewVolvoToken
     Return $TempToken
 }
 
+Function Confirm-VolvoAuthentication
+{
+<#
+	.SYNOPSIS
+		Test if we still have valid cached tokens
+	
+	.DESCRIPTION
+		Test if we still have valid cached tokens that can be reused after reboot etc
+	
+	.EXAMPLE
+		Confirm-VolvoAuthentication
+#>
+
+    [CmdletBinding()]
+    Param (       	
+    )
+
+    Try{
+        $OauthToken = Load-TokenFromDisk
+    } Catch {
+        Write-Error -Message "$($_.Exception.Message)"
+        Throw 'No token found on disk'
+    }
+
+    Try{
+        $Global:Config = Import-ConfigVariable
+    } Catch {
+        Write-Error -Message "$($_.Exception.Message)"
+        Throw 'Could not load config'
+    }
+    
+
+    If ($OauthToken.Source -eq 'Disk'){
+        Write-Debug -Message 'Token loaded from Disk succesfull'
+        Return $OauthToken
+    }
+
+    #Retest if expired needs full auth flow due to test issiue last time a
+    If ($OauthToken.Source -eq 'Invalid' -or $OauthToken.Source -eq 'Invalid-Expired'){
+        Write-Debug -Message 'Token Cache issue need to refresh full token'
+        Try{
+            #Reset disk token to make sure its default
+            Set-VolvoAuthentication -ResetOtpToken
+            $OtpRequest = Initialize-VolvoAuthenticationOtpRequest
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'OTP Request failed'
+        }
+        
+        Write-Host -ForegroundColor Yellow 'locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>"'
+
+        try{
+            $Count =1
+            Do {
+                
+                $Global:Config = Import-ConfigVariable -Reload
+                Write-Host "Running wait for OTP loop $Count of 30"
+                $Count++
+                Write-Debug -Message  "Current OTP value: $($Global:Config.'Credentials.Otp')"
+                Start-Sleep -Seconds 10
+            } Until ($Count -lt 30 -and $Global:Config.'Credentials.Otp' -ne '111111')
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'OTP was not loaded form disk'
+        }
+
+        If ($Global:Config.'Credentials.Otp' -eq '111111'){
+            Write-Error -Message 'No OTP token provided'
+            Throw 'No OTP token provided locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>" '
+        }
+        #OTP has been picked up Reset OTP token on disk
+
+        Try{ 
+            $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
+        } Catch {
+            Write-Error -Message "$($_.Exception.Message)"
+            Throw 'Could not trade OTP for Oauth token'
+        }
+    } 
+
+    Return $OauthToken
+}
