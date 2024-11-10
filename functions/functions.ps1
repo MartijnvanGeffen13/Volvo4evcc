@@ -61,7 +61,7 @@ Function Set-VolvoAuthentication
         $Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
         $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
         $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
-        $Global:Config.'Url.Evcc' = Read-Host -AsSecureString -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
+        $Global:Config.'Url.Evcc' = Read-Host -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
         #Reset OTP on every export
         $Global:Config.'Credentials.Otp' = '111111'
         
@@ -130,28 +130,37 @@ Function Start-Volvo4Evcc
             #Get Volvo data 2 times slower than every poll
             If ($true -eq $EvccData.Connected -and $true -eq $EvccData.Charging -and ($RunCount%2) -eq 0){
             
-                write-host -Message 'Connected - charging - Fast refresh of volvo SOC data'
+                Write-Host -Message 'Connected - charging - Fast refresh of volvo SOC data'
                 Watch-VolvoCar -Token $Token
             }
             #Get Volvo data 5 times slower than every poll
             If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%5) -eq 0){
             
-                write-host -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
+                Write-Host -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
                 Watch-VolvoCar -Token $Token
             }
             #Get Volvo data 5 times slower than every poll
             If ($false -eq $EvccData.Connected -and ($RunCount%60) -eq 0){
             
-                write-host -Message 'Not Connected - No refresh of volvo SOC data'
+                Write-Host -Message 'Not Connected - No refresh of volvo SOC data'
                 Watch-VolvoCar -Token $Token
             }
-
-        }else{
+            #Get Volvo data if this is the first poll
+            If ($RunCount -eq 1){
             
+                Write-Host -Message "Startup with Connected:$($EvccData.Connected) - Charging:$($EvccData.Charging)"
+                Watch-VolvoCar -Token $Token
+            }
+        }else{
+            Write-Host -Message 'Evcc data not found or not reachable'
             Write-Debug -Message 'Evcc data not found or not reachable'
         }
         
         #Sleep till next run
+        If (($RunCount%5) -ne 0){
+            Write-Host -Message 'Just a Evcc pull and token test no action taken'
+        }
+
         Start-Sleep -Seconds $Seconds
         
     }while ($True) 
