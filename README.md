@@ -26,4 +26,4 @@ Roadmap Items:
 
 ![alt text](./Images/image.png)
 
-![alt text](./Images/Screenshot 2024-11-08 231329.png)
+![alt text](./Images/Screenshotfunctionality.png)
