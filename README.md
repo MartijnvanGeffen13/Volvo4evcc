@@ -7,19 +7,23 @@ You can also try a a full feature set build for Home assistend via the Volvo2MQT
 Currently we are in a Minimal viable product state meaning we have some raw working code that is not ready for production. 
 
 
-Feature that should be done before we release a working state module:
+Features in current Alpha release module:
 
-- Car status should be auto detected by EVCC
-- No Constant live poll Only poll when connected and charging 
-- Only pull data usable by EVCC from API instead of everything  **
-- Request less scope in auth session to improve security drastically **
-- Fix all handling of insecure credential use **
-- Multi threaded flows **
-- No secondairy Broker like MQTT **
-- Direct EVCC Yaml intergration without mqtt  **
+- Car status should be auto detectable by EVCC
+- Support for Volvo 2FA authentication
+- No Constant live poll Only poll when connected and charging. Update poll intervall based on connection and SOC (high interval when charging, low interval when connected but not charging, super low interval when not connected)
+- Only pull data interresting for EVCC from API to increase security
+- Request minimal Oauth scope in auth session to improve security
+- Handle all credentials encrypted at all times
+- Application is Multi threaded to increase flexability 
+- Volvo4Evcc is using a super light weight web instance to host the JSON response meaning no MQTT or extra broker is needed.
+- Direct EVCC Yaml intergration
 
 
-** are already in the MVP test.
+Roadmap Items:
 
+- Implement improved solar charning by detecting SOC and set modes (PV,minPV) based on the SOC state.
 
 ![alt text](./Images/image.png)
+
+![alt text](./Images/Screenshot 2024-11-08 231329.png)
