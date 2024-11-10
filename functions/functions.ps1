@@ -95,16 +95,7 @@ Function Start-Volvo4Evcc
     Param ()
 
     #Start the web component in a runspace Recycle old runspace if this exist to free up web port
-    $OldRunspace = Get-Runspace -name Volvo4evcc
-    If ($OldRunspace){
-        $OldRunspace.Close()
-        $OldRunspace.Dispose()
-        #Give system time to dispose
-        Start-Sleep -Seconds 5
-        Start-RestBrokerService
-    }else{
-        Start-RestBrokerService
-    }
+    Reset-VolvoWebService
 
     #Initialise first Token or test token on startup
     $Token = Confirm-VolvoAuthentication
@@ -144,7 +135,8 @@ Function Start-Volvo4Evcc
             }
             #Get Volvo data 5 times slower than every poll
             If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%5) -eq 0){
-            
+                #Also cycle web service
+                Reset-VolvoWebService
                 Write-Host -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
                 Watch-VolvoCar -Token $Token
             }

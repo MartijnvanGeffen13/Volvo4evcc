@@ -355,7 +355,7 @@ Function Start-RestBrokerService
 
     $Runspace = @{}
     $Runspace.runspace = [RunspaceFactory]::CreateRunspace()
-    $Runspace.name = 'Volvo4EvccWebInstance'
+    $runspace.runspace.name = "Volvo4Evcc"
     $Runspace.runspace.ApartmentState = "STA"
     $Runspace.runspace.ThreadOptions = "ReuseThread" 
     #open runspace
@@ -589,4 +589,31 @@ Function Confirm-VolvoAuthentication
     } 
 
     Return $OauthToken
+}
+
+
+Function Reset-VolvoWebService
+{
+<#
+	.SYNOPSIS
+		Reset-VolvoWebService
+	
+	.DESCRIPTION
+		Reset-VolvoWebService
+	
+	.EXAMPLE
+		Reset-VolvoWebService
+#>
+
+    [CmdletBinding()]
+    Param (       	
+    )
+    $OldRunspace = Get-Runspace -name Volvo4evcc
+    If ($OldRunspace){
+        $OldRunspace.Close()
+        $OldRunspace.Dispose()
+        Start-RestBrokerService
+    }else{
+        Start-RestBrokerService
+    }
 }
