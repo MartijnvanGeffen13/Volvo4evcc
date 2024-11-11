@@ -403,6 +403,7 @@ Function Reset-VolvoWebService
     [CmdletBinding()]
     Param (       	
     )
+    
     $OldRunspace = Get-Runspace -name Volvo4evcc
     If ($OldRunspace){
         $Runspace.HttpListener.Abort()

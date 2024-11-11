@@ -91,7 +91,7 @@ Function Start-Volvo4Evcc
 
 #>
 
-    [CmdletBinding(DefaultParameterSetName = 'Default')]
+    [CmdletBinding()]
     Param ()
 
     #Start the web component in a runspace Recycle old runspace if this exist to free up web port
