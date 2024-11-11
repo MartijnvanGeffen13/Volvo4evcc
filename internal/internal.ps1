@@ -350,9 +350,32 @@ Function Start-RestBrokerService
     If(Test-Path -Path './MyData.xml'){
         $global:MyData = Import-Clixml -Path './MyData.xml'
     }Else{
-        $global:MyData.CarData = @{
-
+        $global:MyData.CarData = @"
+{
+    "status": 200,
+    "data": {
+        "estimatedChargingTime": {
+            "value": "0",
+            "unit": "minutes",
+        },
+        "batteryChargeLevel": {
+            "value": "0",
+            "unit": "percentage",
+        },
+        "electricRange": {
+            "value": "0",
+            "unit": "kilometers",
+        },
+        "chargingSystemStatus": {
+            "value": "Startup",
+        },
+        "chargingConnectionStatus": {
+            "value": "Startup",
         }
+    },
+    "operationId": "Startup"
+}
+"@
     }
 
     #$Runspace = @{}
@@ -460,6 +483,7 @@ Function Watch-VolvoCar
 
     $CarDataJson = ($CarData.RawContent -split '(?:\r?\n){2,}')[1]
     $Global:MyData.CarData = $CarDataJson
+    $Global:MyData | Export-Clixml -Path './MyData.xml'
 
 }
 
