@@ -433,18 +433,22 @@ Function Reset-VolvoWebService
         $OldRunspace.Close()
         $OldRunspace.Dispose()
         [GC]::Collect()
-        $LingeringObject = Get-NetTCPConnection -LocalPort 6060 -ea SilentlyContinue
-        If ($LingeringObject){
-            #Attempt retry
-            $OldRunspace = Get-Runspace -name Volvo4evcc
-            If ($OldRunspace){
-                $OldRunspace.Close()
-                $OldRunspace.Dispose()
+        If ($PSVersionTable.OS -like "Microsoft*"){
+            $LingeringObject = Get-NetTCPConnection -LocalPort 6060 -ea SilentlyContinue
+            If ($LingeringObject){
+                #Attempt retry
+                $OldRunspace = Get-Runspace -name Volvo4evcc
+                If ($OldRunspace){
+                    $OldRunspace.Close()
+                    $OldRunspace.Dispose()
+                }
+                [GC]::Collect()
+                Start-Sleep -Seconds 2
+                Start-RestBrokerService
+            
             }
-            [GC]::Collect()
-            Start-Sleep -Seconds 2
-            Start-RestBrokerService
         }Else{
+            Start-Sleep -Seconds 1
             Start-RestBrokerService
         }
     }else{
