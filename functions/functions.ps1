@@ -118,9 +118,20 @@ Function Start-Volvo4Evcc
             Try{
                 $Token = Get-NewVolvoToken -Token $Token
                 Write-Debug -Message 'Token is refreshed succesfully'
+                Reset-VolvoWebService
             } Catch {
                 Write-Error -Message "$($_.Exception.Message)"
                 Throw 'Could not get new token please restart with full auth and 2FA'
+            }
+
+            #Also reset Web interface
+            Try{
+                Reset-VolvoWebService
+                Write-Debug -Message 'VolvoWebService is refreshed succesfully'
+                
+            } Catch {
+                Write-Error -Message "$($_.Exception.Message)"
+                Throw 'Could not refresh VolvoWebService'
             }
         }
         #Get EvccData
@@ -138,7 +149,6 @@ Function Start-Volvo4Evcc
             #Get Volvo data 5 times slower than every poll
             If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%5) -eq 0){
                 #Also cycle web service
-                Reset-VolvoWebService
                 Write-Host -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
