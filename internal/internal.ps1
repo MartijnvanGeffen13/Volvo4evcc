@@ -343,6 +343,8 @@ Function Start-RestBrokerService
 
     $global:MyData = [hashtable]::Synchronized(@{})
     $global:OutputData = [hashtable]::Synchronized(@{})
+    $global:Runspace = [hashtable]::Synchronized(@{})
+
 
     #On startup load last known data into web service
     If(Test-Path -Path './MyData.xml'){
@@ -353,7 +355,7 @@ Function Start-RestBrokerService
         }
     }
 
-    $Runspace = @{}
+    #$Runspace = @{}
     $Runspace.runspace = [RunspaceFactory]::CreateRunspace()
     $runspace.runspace.name = "Volvo4Evcc"
     $Runspace.runspace.ApartmentState = "STA"
@@ -363,11 +365,13 @@ Function Start-RestBrokerService
     $Runspace.psCmd = [PowerShell]::Create() 
     $Runspace.runspace.SessionStateProxy.SetVariable("MyData",$MyData)
     $Runspace.runspace.SessionStateProxy.SetVariable("OutputData",$OutputData)
+    $Runspace.runspace.SessionStateProxy.SetVariable("Runspace",$Runspace)
     $Runspace.psCmd.Runspace = $Runspace.runspace 
 
     #add the scipt to the runspace
     $Runspace.Handle = $Runspace.psCmd.AddScript({  
         $HttpListener = New-Object System.Net.HttpListener
+        $Runspace.HttpListener = $HttpListener
         $HttpListener.Prefixes.Add('http://*:6060/')
         $HttpListener.Start()
         do {
@@ -381,6 +385,47 @@ Function Start-RestBrokerService
             Write-Host "." -NoNewLine
         } until ([System.Console]::KeyAvailable)
     }).BeginInvoke()
+}
+
+Function Reset-VolvoWebService
+{
+<#
+	.SYNOPSIS
+		Reset-VolvoWebService
+	
+	.DESCRIPTION
+		Reset-VolvoWebService
+	
+	.EXAMPLE
+		Reset-VolvoWebService
+#>
+
+    [CmdletBinding()]
+    Param (       	
+    )
+    $OldRunspace = Get-Runspace -name Volvo4evcc
+    If ($OldRunspace){
+        $Runspace.HttpListener.Abort()
+        $OldRunspace.Close()
+        $OldRunspace.Dispose()
+        [GC]::Collect()
+        $LingeringObject = Get-NetTCPConnection -LocalPort 6060 -ea SilentlyContinue
+        If ($LingeringObject){
+            #Attempt retry
+            $OldRunspace = Get-Runspace -name Volvo4evcc
+            If ($OldRunspace){
+                $OldRunspace.Close()
+                $OldRunspace.Dispose()
+            }
+            [GC]::Collect()
+            Start-Sleep -Seconds 2
+            Start-RestBrokerService
+        }Else{
+            Start-RestBrokerService
+        }
+    }else{
+        Start-RestBrokerService
+    }
 }
 
 Function Watch-VolvoCar
@@ -592,28 +637,3 @@ Function Confirm-VolvoAuthentication
 }
 
 
-Function Reset-VolvoWebService
-{
-<#
-	.SYNOPSIS
-		Reset-VolvoWebService
-	
-	.DESCRIPTION
-		Reset-VolvoWebService
-	
-	.EXAMPLE
-		Reset-VolvoWebService
-#>
-
-    [CmdletBinding()]
-    Param (       	
-    )
-    $OldRunspace = Get-Runspace -name Volvo4evcc
-    If ($OldRunspace){
-        $OldRunspace.Close()
-        $OldRunspace.Dispose()
-        Start-RestBrokerService
-    }else{
-        Start-RestBrokerService
-    }
-}
