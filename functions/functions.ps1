@@ -111,12 +111,15 @@ Function Start-Volvo4Evcc
         $RunCount++
 
         #Check token validity and get new one if near expiration
-        If ($Token.ValidTimeToken -lt (Get-date).AddSeconds(-120)){
+        If ($Token.ValidTimeToken.AddSeconds(-120) -lt (Get-date)){
             $Token.Source = 'Invalid-Expired'
             Write-Debug -Message 'Token is expired trying to get new one'
 
             Try{
                 $Token = Get-NewVolvoToken -Token $Token
+                If($PsversionTable.Platform -like "Win*"){
+                    Reset-VolvoWebService
+                }
                 Write-Debug -Message 'Token is refreshed succesfully'
             } Catch {
                 Write-Error -Message "$($_.Exception.Message)"
@@ -173,7 +176,7 @@ Function Start-Volvo4Evcc
         
         #Sleep till next run
         If ($False -eq $MessageDone){
-            $ValidFor = ($Token.ValidTimeToken-(Get-date)).Totalminutes().tostring("0.0")
+            $ValidFor = ($Token.ValidTimeToken-(Get-date)).Totalminutes.tostring("0.0")
             Write-Host -Message "Just a Evcc pull and token test no action taken - Token valid for another : $ValidFor minutes"
         }
 
