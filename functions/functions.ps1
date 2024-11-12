@@ -155,7 +155,7 @@ Function Start-Volvo4Evcc
             #Get Volvo data 5 times slower than every poll
             If ($false -eq $EvccData.Connected -and ($RunCount%60) -eq 0){
             
-                Write-Host -Message 'Not Connected - No refresh of volvo SOC data'
+                Write-Host -Message 'Not Connected - Super Slow Refresh of volvo SOC data - once every hour'
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
