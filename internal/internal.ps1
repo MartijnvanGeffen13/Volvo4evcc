@@ -406,7 +406,7 @@ Function Start-RestBrokerService
             $Context.Response.OutputStream.Write($EncodingWebContent , 0, $EncodingWebContent.Length)
             $Context.Response.Close()
             Write-Host "." -NoNewLine
-        } until ([System.Console]::KeyAvailable)
+        } until ($False)
     }).BeginInvoke()
 }
 
