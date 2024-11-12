@@ -117,9 +117,6 @@ Function Start-Volvo4Evcc
 
             Try{
                 $Token = Get-NewVolvoToken -Token $Token
-                If($PsversionTable.Platform -like "Win*"){
-                    Reset-VolvoWebService
-                }
                 Write-Debug -Message 'Token is refreshed succesfully'
             } Catch {
                 Write-Error -Message "$($_.Exception.Message)"
