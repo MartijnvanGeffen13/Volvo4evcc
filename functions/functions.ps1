@@ -118,7 +118,7 @@ Function Start-Volvo4Evcc
             Try{
                 $Token = Get-NewVolvoToken -Token $Token
                 Write-Debug -Message 'Token is refreshed succesfully'
-                Reset-VolvoWebService
+                #Reset-VolvoWebService
             } Catch {
                 Write-Error -Message "$($_.Exception.Message)"
                 Throw 'Could not get new token please restart with full auth and 2FA'
@@ -126,7 +126,7 @@ Function Start-Volvo4Evcc
 
             #Also reset Web interface
             Try{
-                Reset-VolvoWebService
+                #Reset-VolvoWebService
                 Write-Debug -Message 'VolvoWebService is refreshed succesfully'
                 
             } Catch {

@@ -401,7 +401,7 @@ Function Start-RestBrokerService
             $Context = $HttpListener.GetContext()
             $Context.Response.StatusCode = 200
             $Context.Response.ContentType = 'application/json'
-            $WebContent =  $MyData.Cardata
+            $WebContent =  $Global:MyData.Cardata
             $EncodingWebContent = [System.Text.Encoding]::UTF8.GetBytes($WebContent)
             $Context.Response.OutputStream.Write($EncodingWebContent , 0, $EncodingWebContent.Length)
             $Context.Response.Close()
