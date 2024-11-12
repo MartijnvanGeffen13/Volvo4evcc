@@ -118,21 +118,20 @@ Function Start-Volvo4Evcc
             Try{
                 $Token = Get-NewVolvoToken -Token $Token
                 Write-Debug -Message 'Token is refreshed succesfully'
-                #Reset-VolvoWebService
             } Catch {
                 Write-Error -Message "$($_.Exception.Message)"
                 Throw 'Could not get new token please restart with full auth and 2FA'
             }
 
             #Also reset Web interface
-            Try{
-                #Reset-VolvoWebService
-                Write-Debug -Message 'VolvoWebService is refreshed succesfully'
-                
-            } Catch {
-                Write-Error -Message "$($_.Exception.Message)"
-                Throw 'Could not refresh VolvoWebService'
-            }
+            #Try{
+            #    Reset-VolvoWebService
+            #    Write-Debug -Message 'VolvoWebService is refreshed succesfully'
+            #    
+            #} Catch {
+            #    Write-Error -Message "$($_.Exception.Message)"
+            #    Throw 'Could not refresh VolvoWebService'
+            #}
         }
         #Get EvccData
         $EvccData = Get-EvccData
@@ -174,7 +173,8 @@ Function Start-Volvo4Evcc
         
         #Sleep till next run
         If ($False -eq $MessageDone){
-            Write-Host -Message 'Just a Evcc pull and token test no action taken'
+            $ValidFor = ($Token.ValidTimeToken-(Get-date)).Totalminutes().tostring("0.0")
+            Write-Host -Message "Just a Evcc pull and token test no action taken - Token valid for another : $ValidFor minutes"
         }
 
         Start-Sleep -Seconds $Seconds
