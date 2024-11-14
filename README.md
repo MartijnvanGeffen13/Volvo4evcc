@@ -4,10 +4,10 @@ This addon for EVCC will provide the interface between the volvo API and EVCC. I
 
 You can also try a a full feature set build for Home assistend via the Volvo2MQTT addon but it has some drawbacks if used for EVCC. That is why this addon was build to improve on those challanges.
 
-Currently we are in a Minimal viable product state meaning we have some raw working code that is not ready for production. 
+Currently we are in Release state of Rc2. this versions seems to run stable , documentation is on its way in the wiki with roughly 80% done
 
 Current State:
-- First Release candidate is in the main branch release and running stable in production now
+- First Release candidate RC2 is in the main branch release and running stable in production now for over 48 Hours now (Linux host)
 
 
 Features in current RC2 release module: (See wiki for instalation instructions 80% done)
@@ -22,6 +22,13 @@ Features in current RC2 release module: (See wiki for instalation instructions 8
 - Volvo4Evcc is using a super light weight web instance to host the JSON response meaning no MQTT or extra broker is needed.
 - Direct EVCC Yaml intergration
 - Auto application restarts and startup via crontab no matter if app is started allready
+
+Instalation prerequisits:
+https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/0-Installation-Prerequisites
+
+Installation instructions of the module
+https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/1-Installation-of-Volvo4Evcc
+
 
 
 Roadmap Items:
