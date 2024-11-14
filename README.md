@@ -29,6 +29,8 @@ https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/0-Installation-Prerequisit
 Installation instructions of the module
 https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/1-Installation-of-Volvo4Evcc
 
+EVCC Yaml Code:
+https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/2-EVCC-Yaml-Code
 
 
 Roadmap Items:
