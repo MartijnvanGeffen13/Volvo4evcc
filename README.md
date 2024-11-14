@@ -10,7 +10,7 @@ Current State:
 - First Release candidate is in the main branch release and running stable in production now
 
 
-Features in current RC2 release module:
+Features in current RC2 release module: (See wiki for instalation instructions 80% done)
 
 - Car status should be auto detectable by EVCC
 - Support for Volvo 2FA authentication
