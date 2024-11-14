@@ -7,7 +7,7 @@ You can also try a a full feature set build for Home assistend via the Volvo2MQT
 Currently we are in Release state of Rc2. this versions seems to run stable , documentation is on its way in the wiki with roughly 80% done
 
 Current State:
-- First Release candidate RC2 is in the main branch release and running stable in production now for over 48 Hours now (Linux host)
+- First Release candidate RC2 is in the main branch release and running stable in production now for over 48 Hours now (Linux host) - I am currently still working on a Auth issue to see if we can run without the app impersonation , as soon as this is either fixed or a better way is found you can start testing yourself. Just little more patience :)
 
 
 Features in current RC2 release module: (See wiki for instalation instructions 80% done)
