@@ -1,5 +1,6 @@
 #Load the module
-Import-Module "$($HOME)/volvo4evcc/Volvo4evcc.psd1" 
+Import-Module "$($pwd.path)/volvo4evcc/Volvo4evcc.psd1" 
+Import-Module "DnsClient-PS"
 
 #Kill any running process that is the same
 If ($PSVersionTable.Platform -like "Unix*"){

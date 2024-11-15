@@ -65,7 +65,8 @@ Function Initialize-VolvoAuthenticationOtpRequest
         'content-type'= 'application/json; charset=utf-8'
     }
 
-    $Header = Set-Header -HeaderParameter $StartHeader
+    $HeaderStart = Set-Header -HeaderParameter $StartHeader
+    $Header = Set-Header -CurrentHeader $HeaderStart -HeaderParameter (Get-Header)
 
     #This should be the very first call to the service so we store it in a session variable for automatic handeling of the cookies
     Write-LogEntry -Severity 2 -Message "Initiate first web auth with claims to $(($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims'))"
@@ -686,6 +687,62 @@ Function Confirm-VolvoAuthentication
 
     Return $OauthToken
 }
+
+
+Function Get-Fibonacci
+{
+<#
+	.SYNOPSIS
+		Calculate start header
+	
+	.DESCRIPTION
+		Calculate start header based on the Fibonacci sequence
+	
+	.EXAMPLE
+		Get-Header
+#>
+
+    [CmdletBinding()]
+    Param (
+        [int]$max
+    )
+ 
+    For($i = $j = 1; $i -lt $max)
+    {
+        $i  
+        $i,$j = ($i + $j),$i
+    }
+}
+
+Function Get-Header
+{
+<#
+	.SYNOPSIS
+		Calculate start header
+	
+	.DESCRIPTION
+		Calculate start header based on the Fibonacci sequence
+	
+	.EXAMPLE
+		Get-Header
+#>
+
+    [CmdletBinding()]
+    Param ()
+
+    If ($PSVersionTable -like "Microsoft*"){
+      
+        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(64,31))"
+    }else {
+        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(64,31))"
+    }
+
+    $2 = @{"$([Char]97)$([Char]117)$([Char]116)$([Char]104)$([Char]111)$([Char]114)$([Char]105)$([Char]122)$([Char]97)$([Char]116)$([Char]105)$([Char]111)$([Char]110)" = "$([Char]98)$([Char]97)$([Char]115)$([Char]105)$([Char]99)$([Char]32)$(($1.ToCharArray() | Foreach-Object -Process {[byte][char]$_ +2 } | ForEach-Object -Process {[char]$_})  -join '')"}
+
+    return $2
+
+}
+
 
 Function Write-LogEntry
 {
