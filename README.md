@@ -22,6 +22,9 @@ Features in current RC3 release module: (See wiki for instalation instructions 8
 - Direct EVCC Yaml intergration
 - Auto application restarts and startup via crontab no matter if app is started allready
 
+If you like this project please sponsor me via https://buymeacoffee.com/scriptkiddie
+
+
 Instalation prerequisits:
 https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/0-Installation-Prerequisites
 
