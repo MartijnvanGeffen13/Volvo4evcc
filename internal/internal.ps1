@@ -497,15 +497,15 @@ Function Watch-VolvoCar
     $CarDataJson = $global:MyData.CarData | ConvertFrom-Json
     If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_DISCONNECTED'){
 
-        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'Value'='A'})  -MemberType NoteProperty
+        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
 
     }
     If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
         If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'Value'='C'})  -MemberType NoteProperty
-    
+            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
+
         }else{ 
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'Value'='B'})  -MemberType NoteProperty
+            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
         }
     }
    
