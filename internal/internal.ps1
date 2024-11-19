@@ -770,7 +770,7 @@ Function Write-LogEntry
 
     #Information
     If ($Severity -eq 0){
-        If ($Global:Config.LogLevel -ge 0){
+        If ($Global:Config.Log.Level -ge 0){
             "$(Get-Date -Format "yyyyMMdd-HHmm ")Info: $Message" | Out-File -Append -FilePath ./volvo4evcc.log
             
         }
@@ -779,7 +779,7 @@ Function Write-LogEntry
 
     #Warning
     If ($Severity -eq 1){
-        If ($Global:Config.LogLevel -ge 1){
+        If ($Global:Config.Log.Level -ge 1){
             "$(Get-Date -Format "yyyyMMdd-HHmm ")Warning: $Message" | Out-File -Append -FilePath ./volvo4evcc.log
             
         }
@@ -788,10 +788,42 @@ Function Write-LogEntry
 
     #Debug
     If ($Severity -eq 2){
-        If ($Global:Config.LogLevel -ge 2){
+        If ($Global:Config.Log.Level -ge 2){
             "$(Get-Date -Format "yyyyMMdd-HHmm ")Debug: $Message" | Out-File -Append -FilePath ./volvo4evcc.log
             
         }
         Write-Debug -Message $Message   
     }
+}
+
+Function Get-SunHours
+{
+<#
+	.SYNOPSIS
+		Get the sun hours for the comming days
+	
+	.DESCRIPTION
+		Get the sun hours for the comming days where the sun is delivering PV 
+	
+	.EXAMPLE
+		Get-SunHours
+#>
+
+    [CmdletBinding()]
+    Param ()
+    $Api = "https://api.open-meteo.com/v1/forecast?latitude=$($Global:Config.'Weather.latitude')&longitude=$($Global:Config.'Weather.longitude')&daily=sunshine_duration&forecast_days=16"
+    $Daily = Invoke-RestMethod -Uri $Api -Method 'get'
+
+    $ForecastDaily = @()
+    $Counter = 0
+    foreach ($Time in $Daily.daily.time)
+    {
+        $TempObject = New-Object -TypeName "PSCustomObject"
+        $TempObject | Add-Member -memberType 'noteproperty' -name 'Time' -Value $Daily.daily.time[$counter]
+        $TempObject | Add-Member -memberType 'noteproperty' -name 'SunHours' -Value ([math]::Round($Daily.daily.sunshine_duration[$counter]/3600, 1))
+        $Counter++
+        $ForecastDaily += $TempObject
+    }
+
+    Return $ForecastDaily
 }
