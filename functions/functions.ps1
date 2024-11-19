@@ -44,7 +44,7 @@ Function Set-VolvoAuthentication
         $Global:Config = Import-ConfigVariable -Reload
 
         Do { 
-            $Response = Read-Host -Prompt '{(Y) or (N) }'
+            $Response = Read-Host -Prompt 'Enable Weather module: {(Y) or (N) }'
         }until($Response -eq 'Y' -or $Response -eq 'N')
         If ($Response -eq 'Y'){
                     $Global:Config.'Weather.Enabled' = $true 
