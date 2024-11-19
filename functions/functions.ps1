@@ -194,7 +194,7 @@ Function Start-Volvo4Evcc
                 Watch-VolvoCar -Token $Token
             }
             #Get weather forecast and set MinSOC if needed
-            If ($true -eq $Global:config.Weather.Enabled -and ($RunCount%60) -eq 0){
+            If ($true -eq $Global:config.'Weather.Enabled' -and ($RunCount%60) -eq 0){
 
                 Write-LogEntry -Severity 0 -Message 'Weather - Testing weather settings'
                 $MessageDone = $True

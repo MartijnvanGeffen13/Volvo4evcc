@@ -811,7 +811,7 @@ Function Get-SunHours
 
     [CmdletBinding()]
     Param ()
-    $Api = "https://api.open-meteo.com/v1/forecast?latitude=$($Global:Config.'Weather.latitude')&longitude=$($Global:Config.'Weather.longitude')&daily=sunshine_duration&forecast_days=16"
+    $Api = "https://api.open-meteo.com/v1/forecast?latitude=$($Global:Config.'Weather.latitude'| ConvertFrom-SecureString -AsPlainText)&longitude=$($Global:Config.'Weather.longitude'| ConvertFrom-SecureString -AsPlainText)&daily=sunshine_duration&forecast_days=16"
     $Daily = Invoke-RestMethod -Uri $Api -Method 'get'
 
     $ForecastDaily = @()
