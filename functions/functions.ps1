@@ -54,6 +54,9 @@ Function Set-VolvoAuthentication
         }
         $Global:Config.'Weather.Longitude' = Read-Host -AsSecureString -Prompt 'https://www.latlong.net Location Longitude: '
         $Global:Config.'Weather.Latitude' = Read-Host -AsSecureString -Prompt 'https://www.latlong.net Location Latitude: '
+        $Global:Config.'Weather.SunHoursHigh' = 7
+        $Global:Config.'Weather.SunHoursMedium' = 4
+        
         Write-LogEntry -Severity 0 -Message "Weather info writen to config"
         
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
@@ -194,7 +197,7 @@ Function Start-Volvo4Evcc
                 Watch-VolvoCar -Token $Token
             }
             #Get weather forecast and set MinSOC if needed
-            If ($true -eq $Global:config.'Weather.Enabled' -and ($RunCount%60) -eq 0){
+            If ($true -eq $Global:config.'Weather.Enabled' -and ($RunCount%1) -eq 0){
 
                 Write-LogEntry -Severity 0 -Message 'Weather - Testing weather settings'
                 $MessageDone = $True
