@@ -511,7 +511,7 @@ Function Watch-VolvoCar
     }
 
     If ($true -eq $Global:config.'Weather.Enabled'){
-        $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'=$Global:Config.'Weather.SunHoursTotalAverage'})  -MemberType NoteProperty
+        $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
     }
    
     $Global:MyData.CarData = $CarDataJson | ConvertTo-Json
