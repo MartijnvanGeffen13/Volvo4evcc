@@ -14,11 +14,11 @@ Features in current RC3 release module: (See wiki for instalation instructions d
 
 - ** Car status is auto detectable by EVCC
 - ** No Constant live poll Only poll when connected and charging. Update poll intervall based on connection and SOC (high interval when charging, low interval when connected but not charging, super low interval when not connected)
-- Support for Volvo 2FA authentication- 
 - ** Only pull data interresting for EVCC from API to increase security (Not exposing coordinates and door unlock to possible hackers) 
 - ** Request minimal Oauth scope in auth session to improve security (Token does not include unlock or coordinate permissions)
 - ** Handle all credentials encrypted at all times
 - ** Volvo4Evcc is using a super light weight web instance to host the JSON response meaning no MQTT or extra broker is needed.
+- Support for Volvo 2FA authentication
 - Application is Multi threaded to increase flexability 
 - Direct EVCC Yaml intergration
 - Auto application restarts and startup via crontab no matter if app is started allready
