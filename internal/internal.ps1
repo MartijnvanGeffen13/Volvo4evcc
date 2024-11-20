@@ -20,7 +20,8 @@ Function Load-TokenFromDisk
         $Token = Import-Clixml -Path './EncryptedOAuthToken.xml'
     }else {
         Write-LogEntry -Severity 1 -Message 'Access Token Not found on disk'
-        [String]$Token.AccessToken = 'Not Found on Disk'
+        $Token.AccessToken = 'Not Found on Disk'
+        $Token.Source = 'Invalid'
     }
     If ($Token.AccessToken -ne 'Not Found on Disk'){
         $Token.Source = 'Disk'
@@ -628,14 +629,14 @@ Function Confirm-VolvoAuthentication
     Try{
         $OauthToken = Load-TokenFromDisk
     } Catch {
-        Write-Error -Message "$($_.Exception.Message)"
+        Write-LogEntry -Severity 0 -Message "$($_.Exception.Message)"
         Throw 'No token found on disk'
     }
 
     Try{
         $Global:Config = Import-ConfigVariable
     } Catch {
-        Write-Error -Message "$($_.Exception.Message)"
+        Write-LogEntry -Severity 0 -Message "$($_.Exception.Message)"
         Throw 'Could not load config'
     }
     
@@ -757,7 +758,7 @@ Function Write-LogEntry
 		Write a entry in the log based on the severity level of the message
 	
 	.EXAMPLE
-		Load-TokenFromDisk
+		Write-LogEntry
 #>
 
     [CmdletBinding()]

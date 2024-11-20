@@ -62,7 +62,7 @@ Function Set-VolvoAuthentication
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
-        Break
+        return
     }
 
     If ($PSBoundParameters.ContainsKey('OtpToken')){
@@ -76,7 +76,7 @@ Function Set-VolvoAuthentication
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
-        Break
+        return
     }
     
     if ($PSBoundParameters.ContainsKey('ResetOtpToken') ) {
@@ -89,7 +89,7 @@ Function Set-VolvoAuthentication
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
-        Break
+        return
     }
 
     $Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
@@ -127,13 +127,17 @@ Function Start-Volvo4Evcc
     [CmdletBinding()]
     Param ()
 
+
+    #On first start check if config was saved
+    If (!(Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml")){
+        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+    }
+
     #Start the web component in a runspace Recycle old runspace if this exist to free up web port
     Reset-VolvoWebService
 
     #Initialise first Token or test token on startup
     $Token = Confirm-VolvoAuthentication
-
-    #loop for timers
 
     #Wrap in loop based on evcc data
     $Seconds = 60
@@ -160,15 +164,6 @@ Function Start-Volvo4Evcc
                 Throw 'Could not get new token please restart with full auth and 2FA'
             }
 
-            #Also reset Web interface
-            #Try{
-            #    Reset-VolvoWebService
-            #    Write-LogEntry -Severity 2 -Message 'VolvoWebService is refreshed succesfully'
-            #    
-            #} Catch {
-            #    Write-Error -Message "$($_.Exception.Message)"
-            #    Throw 'Could not refresh VolvoWebService'
-            #}
         }
         #Get EvccData
         $EvccData = Get-EvccData
