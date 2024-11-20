@@ -7,7 +7,8 @@ You can also try a a full feature set build for Home assistend via the Volvo2MQT
 Currently we are in Release state of Rc3. this versions seems to run stable , documentation is on its way in the wiki with roughly 80% done
 
 Current State:
-- First Release candidate RC3 is in the main branch release and running stable in production now for over 48 Hours now (Linux host) 
+- First Release candidate RC3 is in the main branch release and running stable in production now for over 48 Hours now (Linux host)
+- Weather Module available in the branch - stable in production. will move to master soon.
 
 Features in current RC3 release module: (See wiki for instalation instructions 80% done)
 
@@ -38,6 +39,7 @@ https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/2-EVCC-Yaml-Code
 Roadmap Items:
 
 - Implement improved solar charning by detecting SOC and set modes (PV,minPV) based on the SOC state.
+- Multi volvo car support
   
 ![alt text](./Images/cars.jpg)  
 
