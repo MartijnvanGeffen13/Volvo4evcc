@@ -1,16 +1,16 @@
-# Volvo4evcc
+<h1># Volvo4evcc</h1>
 
-This addon for EVCC will provide the interface between the volvo API and EVCC. It supports the 2FA Auth flow and does not need a MQTT broker. This module is build as a dedicated EVCC module. 
+<h3>If you like this project please sponsor me via https://buymeacoffee.com/scriptkiddie</h3>
 
-You can also try a a full feature set build for Home assistend via the Volvo2MQTT addon but it has some drawbacks if used for EVCC. That is why this addon was build to improve on those challanges.
+This addon for EVCC will provide the interface between the volvo API and EVCC. It supports the 2FA Auth flow and does not need a MQTT broker. This module is build as a dedicated EVCC module in contrast tot the Volvo2MQTT addon (That is native to Home assistend). This addon is build to improve on the issues Volvo2MQTT has and is not willing to fix for EVCC. As a bonus we have added functionality and greatly enhanced security. 
 
-Currently we are in Release state of Rc3. this versions seems to run stable , documentation is on its way in the wiki with roughly 80% done
+Currently we are in Release state of Rc3. this versions seems to run stable , documentation is in the wiki. 
 
-Current State:
-- First Release candidate RC3 is in the main branch release and running stable in production now for over 48 Hours now (Linux host)
-- Weather Module available in the branch - stable in production. will move to master soon.
+<h3>Current State:</h3>
+- First Release candidate RC3 is in the main branch release and running stable in production now for over 7 days (Linux host)
+- Weather Module available in the branch - stable in production for 2 days. will move to master soon.
 
-Features in current RC3 release module: (See wiki for instalation instructions done)
+<h3>Features in current RC3 release module: (See wiki for instalation instructions done)</h3>
 
 - ** Car status is auto detectable by EVCC
 - ** No Constant live poll Only poll when connected and charging. Update poll intervall based on connection and SOC (high interval when charging, low interval when connected but not charging, super low interval when not connected)
@@ -25,14 +25,11 @@ Features in current RC3 release module: (See wiki for instalation instructions d
 
 **Improvement over Volvo2MQTT
 
-Added Features:
+<h3>Added Features:</h3>
 - Weather forecast support to auto set the MINSOC charging value based on solar hours for the next 3 days so you dont have to update your plan manual. It will increase when low sun and decrease when sun forcasting is good. Always keeps a buffer for unforcasted sun. 
 
 
-
-If you like this project please sponsor me via https://buymeacoffee.com/scriptkiddie
-
-
+<h2>Wiki Items</h2>
 Instalation prerequisits:
 https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/0-Installation-Prerequisites
 
