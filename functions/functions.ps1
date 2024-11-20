@@ -192,43 +192,23 @@ Function Start-Volvo4Evcc
             #Get Volvo data 5 times slower than every poll
             If ($false -eq $EvccData.Connected -and ($RunCount%60) -eq 0){
             
+                #Get weather forecast and set MinSOC if needed
+                If ($true -eq $Global:config.'Weather.Enabled'){
+                    Update-SunHours
+                }
+
                 Write-LogEntry -Severity 0 -Message 'Not Connected - Super Slow Refresh of volvo SOC data - once every hour'
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
+
             }
-            #Get weather forecast and set MinSOC if needed
-            If ($true -eq $Global:config.'Weather.Enabled' -and ($RunCount%60) -eq 0){
-
-                Write-LogEntry -Severity 0 -Message 'Weather - Testing weather settings'
-                $MessageDone = $True
-                $Sunhours = Get-Sunhours
-
-                $Evcc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/state" -Method get
-                $TargetVehicle = $evcc.result.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
-
-                if($SunHours){
-                    $SunHours.SunHours[0..2] | ForEach-Object -Begin {$TotalSunHours = 0} -Process {$TotalSunHours += $_}
-                    If (($TotalSunHours / 3) -ge $Global:Config.'Weather.SunHoursHigh'){
-                        Write-LogEntry -Severity 0 -Message "Weather - More than enough sun"
-                        
-                        $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/30" -Method Post
-
-                    }elseIf (($TotalSunHours / 3) -ge $Global:Config.'Weather.SunHoursMedium'){
-                        Write-LogEntry -Severity 0 -Message "Weather - Medium sun"
-                        
-                        $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/55" -Method Post
-
-                    }elseif(($TotalSunHours / 3) -lt $Global:Config.'Weather.SunHoursMedium'){
-                        Write-LogEntry -Severity 0 -Message "Weather - Not enough sun"
-                        
-                        $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/75" -Method Post
-
-                    }
-                }
-            }
+            
             #Get Volvo data if this is the first poll
             If ($RunCount -eq 1){
-            
+                #Get weather forecast and set MinSOC if needed
+                If ($true -eq $Global:config.'Weather.Enabled'){
+                    Update-SunHours
+                }
                 Write-LogEntry -Severity 0 -Message "Startup with Connected:$($EvccData.Connected) - Charging:$($EvccData.Charging)"
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token

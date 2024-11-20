@@ -508,6 +508,10 @@ Function Watch-VolvoCar
             $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
         }
     }
+
+    If ($true -eq $Global:config.'Weather.Enabled'){
+        $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'=$Global:Config.'Weather.SunHoursTotalAverage'})  -MemberType NoteProperty
+    }
    
     $Global:MyData.CarData = $CarDataJson | ConvertTo-Json
     $Global:MyData | Export-Clixml -Path './MyData.xml'
@@ -566,8 +570,7 @@ Function Get-NewVolvoToken
     
     )
 
-    $Header = Set-Header -HeaderParameter @{
-        'authorization' = 'Basic aDRZZjBiOlU4WWtTYlZsNnh3c2c1WVFxWmZyZ1ZtSWFEcGhPc3kxUENhVXNpY1F0bzNUUjVrd2FKc2U0QVpkZ2ZJZmNMeXc='
+    $Header = Set-Header -HeaderParameter @{        
         'content-type' = 'application/x-www-form-urlencoded'
         'accept' = 'application/json'
     }
@@ -826,4 +829,52 @@ Function Get-SunHours
     }
 
     Return $ForecastDaily
+}
+
+
+Function Update-SunHours
+{
+    <#
+	.SYNOPSIS
+		Update the sun hours for the comming days
+	
+	.DESCRIPTION
+		Update the sun hours for the comming days where the sun is delivering PV 
+	
+	.EXAMPLE
+		Update-SunHours
+#>
+
+    [CmdletBinding()]
+    Param ()
+
+    Write-LogEntry -Severity 0 -Message 'Weather - Testing weather settings'
+
+    $Sunhours = Get-Sunhours
+
+    $Evcc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/state" -Method get
+    $TargetVehicle = $evcc.result.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
+
+    if($SunHours){
+        $SunHours.SunHours[0..($Global:Config.'Weather.SunHoursDaysDevider'-1)] | ForEach-Object -Begin {$TotalSunHours = 0} -Process {$TotalSunHours += $_}
+        If (($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -ge $Global:Config.'Weather.SunHoursHigh'){
+            Write-LogEntry -Severity 0 -Message "Weather - More than enough sun"
+            
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocLow')" -Method Post
+
+        }elseIf (($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -ge $Global:Config.'Weather.SunHoursMedium'){
+            Write-LogEntry -Severity 0 -Message "Weather - Medium sun"
+            
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocMedium')" -Method Post
+
+        }elseif(($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -lt $Global:Config.'Weather.SunHoursMedium'){
+            Write-LogEntry -Severity 0 -Message "Weather - Not enough sun"
+            
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocHigh')" -Method Post
+
+        }
+    }
+
+    $Global:Config.'Weather.SunHoursTotalAverage' = $TotalSunHours / 3
+    
 }
