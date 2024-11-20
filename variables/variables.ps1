@@ -15,4 +15,9 @@ $Global:Config = @{
     'Weather.Latitude' = 1
     'Weather.SunHoursHigh' = 7
     'Weather.SunHoursMedium' = 4
+    'Weather.SunHoursDaysDevider' = 3
+    'Weather.SunHoursTotalAverage' = 0
+    'Weather.SunHoursMinsocHigh' = 75
+    'Weather.SunHoursMinsocMedium' = 50
+    'Weather.SunHoursMinsocLow' = 30
 }
