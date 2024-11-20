@@ -44,6 +44,7 @@ Roadmap Items:
 
 - Implement improved solar charning by detecting SOC and set modes (PV,minPV) based on the SOC state.
 - Multi volvo car support
+- EVCC template has pull request to be merged into EVCC master 
   
 ![alt text](./Images/cars.jpg)  
 
