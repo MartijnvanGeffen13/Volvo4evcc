@@ -10,18 +10,25 @@ Current State:
 - First Release candidate RC3 is in the main branch release and running stable in production now for over 48 Hours now (Linux host)
 - Weather Module available in the branch - stable in production. will move to master soon.
 
-Features in current RC3 release module: (See wiki for instalation instructions 80% done)
+Features in current RC3 release module: (See wiki for instalation instructions done)
 
-- Car status should be auto detectable by EVCC
-- Support for Volvo 2FA authentication
-- No Constant live poll Only poll when connected and charging. Update poll intervall based on connection and SOC (high interval when charging, low interval when connected but not charging, super low interval when not connected)
-- Only pull data interresting for EVCC from API to increase security
-- Request minimal Oauth scope in auth session to improve security
-- Handle all credentials encrypted at all times
+- ** Car status is auto detectable by EVCC
+- ** No Constant live poll Only poll when connected and charging. Update poll intervall based on connection and SOC (high interval when charging, low interval when connected but not charging, super low interval when not connected)
+- Support for Volvo 2FA authentication- 
+- ** Only pull data interresting for EVCC from API to increase security (Not exposing coordinates and door unlock to possible hackers) 
+- ** Request minimal Oauth scope in auth session to improve security (Token does not include unlock or coordinate permissions)
+- ** Handle all credentials encrypted at all times
+- ** Volvo4Evcc is using a super light weight web instance to host the JSON response meaning no MQTT or extra broker is needed.
 - Application is Multi threaded to increase flexability 
-- Volvo4Evcc is using a super light weight web instance to host the JSON response meaning no MQTT or extra broker is needed.
 - Direct EVCC Yaml intergration
 - Auto application restarts and startup via crontab no matter if app is started allready
+
+**Improvement over Volvo2MQTT
+
+Added Features:
+- Weather forecast support to auto set the MINSOC charging value based on solar hours for the next 3 days so you dont have to update your plan manual. It will increase when low sun and decrease when sun forcasting is good. Always keeps a buffer for unforcasted sun. 
+
+
 
 If you like this project please sponsor me via https://buymeacoffee.com/scriptkiddie
 
