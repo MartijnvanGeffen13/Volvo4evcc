@@ -4,11 +4,11 @@
 
 This addon for EVCC will provide the interface between the volvo API and EVCC. It supports the 2FA Auth flow and does not need a MQTT broker. This module is build as a dedicated EVCC module in contrast tot the Volvo2MQTT addon (That is native to Home assistend). This addon is build to improve on the issues Volvo2MQTT has and is not willing to fix for EVCC. As a bonus we have added functionality and greatly enhanced security. 
 
-Currently we are in Release state of Rc3. this versions seems to run stable , documentation is in the wiki. 
+Currently we are in Release state of Version 1.5. this versions seems to run stable , documentation is in the wiki. 
 
 <h3>Current State:</h3>
-- First Release candidate RC3 is in the main branch release and running stable in production now for over 7 days (Linux host)
-- Weather Module available in the branch - stable in production for 2 days. will move to master soon.
+- V1.5 released in the main branch and running stable in production now for over 10 days (Linux host)
+- Weather Module addon available and guide is in the wiki
 
 <h3>Features in current RC3 release module: (See wiki for instalation instructions done)</h3>
 
@@ -40,15 +40,16 @@ https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/1-Installation-of-Volvo4Ev
 EVCC Yaml Code:
 https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/2-EVCC-Yaml-Code
 
+Wheater Module:
+https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/3-Weather-Module
 
 Roadmap Items:
 
 - Implement improved solar charning by detecting SOC and set modes (PV,minPV) based on the SOC state.
 - Multi volvo car support
-- EVCC template has pull request to be merged into EVCC master 
   
 ![alt text](./Images/cars.jpg)  
 
-![alt text](./Images/1.png)
+![image](https://github.com/user-attachments/assets/f8f8b043-9bd8-4279-8e59-58b25cf17ecf)
 
 ![alt text](./Images/2.png)
