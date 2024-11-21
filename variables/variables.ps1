@@ -20,4 +20,5 @@ $Global:Config = @{
     'Weather.SunHoursMinsocHigh' = 75
     'Weather.SunHoursMinsocMedium' = 50
     'Weather.SunHoursMinsocLow' = 30
+    'Weather.SunHoursToday' = 0
 }

@@ -512,6 +512,7 @@ Function Watch-VolvoCar
 
     If ($true -eq $Global:config.'Weather.Enabled'){
         $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
+        $CarDataJson.data| add-member -Name "SunHoursToday" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursToday')"})  -MemberType NoteProperty
     }
    
     $Global:MyData.CarData = $CarDataJson | ConvertTo-Json
@@ -872,6 +873,7 @@ Function Update-SunHours
             If ($SunHours.SunHours[0] -gt $Global:Config.'Weather.SunHoursMedium')
             {
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocLow'
+                Write-LogEntry -Severity 0 -Message "Weather - Daily overwrite As today has more sun"
             }else {
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocMedium'
             }
@@ -885,6 +887,7 @@ Function Update-SunHours
             If ($SunHours.SunHours[0] -gt $Global:Config.'Weather.SunHoursMedium')
             {
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocLow'
+                Write-LogEntry -Severity 0 -Message "Weather - Daily overwrite As today has more sun"
             }else {
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocHigh'
             }
@@ -895,5 +898,6 @@ Function Update-SunHours
     }
 
     $Global:Config.'Weather.SunHoursTotalAverage' = $TotalSunHours / 3
+    $Global:Config.'Weather.SunHoursToday' = $SunHours.SunHours[0]
     
 }
