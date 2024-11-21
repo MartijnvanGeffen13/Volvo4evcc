@@ -22,6 +22,7 @@ Function Set-VolvoAuthentication
 #>
 
     [CmdletBinding(DefaultParameterSetName = 'Default')]
+    [Alias('Set-VolvoConfig')]
     Param (  
         
         [Parameter(Mandatory=$False,
@@ -30,10 +31,40 @@ Function Set-VolvoAuthentication
 
         [Parameter(Mandatory=$False,
         ParametersetName = 'Reset')]
-        [switch]$ResetOtpToken
+        [switch]$ResetOtpToken,
 
+        [Parameter(Mandatory=$true,
+        ParametersetName = 'WeatherInfo')]
+        [switch]$WeatherInfo
     )
     
+    If ($PSBoundParameters.ContainsKey('WeatherInfo')){
+    
+        #First reload current config before exporting again could be other default session that was started
+        $Global:Config = Import-ConfigVariable -Reload
+
+        Do { 
+            $Response = Read-Host -Prompt 'Enable Weather module: {(Y) or (N) }'
+        }until($Response -eq 'Y' -or $Response -eq 'N')
+        If ($Response -eq 'Y'){
+                    $Global:Config.'Weather.Enabled' = $true 
+        }
+        If ($Response -eq 'N'){
+                    $Global:Config.'Weather.Enabled' = $false 
+        }
+        $Global:Config.'Weather.Longitude' = Read-Host -AsSecureString -Prompt 'https://www.latlong.net Location Longitude: '
+        $Global:Config.'Weather.Latitude' = Read-Host -AsSecureString -Prompt 'https://www.latlong.net Location Latitude: '
+        $Global:Config.'Weather.SunHoursHigh' = 7
+        $Global:Config.'Weather.SunHoursMedium' = 4
+        
+        Write-LogEntry -Severity 0 -Message "Weather info writen to config"
+        
+        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+        Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+
+        return
+    }
+
     If ($PSBoundParameters.ContainsKey('OtpToken')){
     
         #First reload current config before exporting again could be other default session that was started
@@ -45,7 +76,10 @@ Function Set-VolvoAuthentication
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
-    }elseif ($PSBoundParameters.ContainsKey('ResetOtpToken') ) {
+        return
+    }
+    
+    if ($PSBoundParameters.ContainsKey('ResetOtpToken') ) {
 
         $Global:Config = Import-ConfigVariable -Reload
 
@@ -55,22 +89,21 @@ Function Set-VolvoAuthentication
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
 
-    }else {
-
-        $Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
-        $Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
-        $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
-        $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
-        $Global:Config.'Url.Evcc' = Read-Host -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
-        #Reset OTP on every export
-        $Global:Config.'Credentials.Otp' = '111111'
-        
-        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
-        Write-LogEntry -Severity 0 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
-
-        return $Global:Config
-
+        return
     }
+
+    $Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
+    $Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
+    $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
+    $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
+    $Global:Config.'Url.Evcc' = Read-Host -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
+    #Reset OTP on every export
+    $Global:Config.'Credentials.Otp' = '111111'
+    
+    Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+    Write-LogEntry -Severity 0 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+
+    return $Global:Config
 
 }
 
@@ -94,13 +127,17 @@ Function Start-Volvo4Evcc
     [CmdletBinding()]
     Param ()
 
+
+    #On first start check if config was saved
+    If (!(Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml")){
+        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+    }
+
     #Start the web component in a runspace Recycle old runspace if this exist to free up web port
     Reset-VolvoWebService
 
     #Initialise first Token or test token on startup
     $Token = Confirm-VolvoAuthentication
-
-    #loop for timers
 
     #Wrap in loop based on evcc data
     $Seconds = 60
@@ -127,15 +164,6 @@ Function Start-Volvo4Evcc
                 Throw 'Could not get new token please restart with full auth and 2FA'
             }
 
-            #Also reset Web interface
-            #Try{
-            #    Reset-VolvoWebService
-            #    Write-LogEntry -Severity 2 -Message 'VolvoWebService is refreshed succesfully'
-            #    
-            #} Catch {
-            #    Write-Error -Message "$($_.Exception.Message)"
-            #    Throw 'Could not refresh VolvoWebService'
-            #}
         }
         #Get EvccData
         $EvccData = Get-EvccData
@@ -156,16 +184,28 @@ Function Start-Volvo4Evcc
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
+
+            #Get weather forecast and set MinSOC if needed
+            If ($true -eq $Global:Config.'Weather.Enabled' -and ($RunCount%60) -eq 0){
+                Update-SunHours
+            }
+
+
             #Get Volvo data 5 times slower than every poll
             If ($false -eq $EvccData.Connected -and ($RunCount%60) -eq 0){
-            
+
                 Write-LogEntry -Severity 0 -Message 'Not Connected - Super Slow Refresh of volvo SOC data - once every hour'
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
+
             }
+
             #Get Volvo data if this is the first poll
             If ($RunCount -eq 1){
-            
+                #Get weather forecast and set MinSOC if needed
+                If ($true -eq $Global:Config.'Weather.Enabled'){
+                    Update-SunHours
+                }
                 Write-LogEntry -Severity 0 -Message "Startup with Connected:$($EvccData.Connected) - Charging:$($EvccData.Charging)"
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token

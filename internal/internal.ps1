@@ -20,7 +20,8 @@ Function Load-TokenFromDisk
         $Token = Import-Clixml -Path './EncryptedOAuthToken.xml'
     }else {
         Write-LogEntry -Severity 1 -Message 'Access Token Not found on disk'
-        [String]$Token.AccessToken = 'Not Found on Disk'
+        $Token.AccessToken = 'Not Found on Disk'
+        $Token.Source = 'Invalid'
     }
     If ($Token.AccessToken -ne 'Not Found on Disk'){
         $Token.Source = 'Disk'
@@ -497,16 +498,21 @@ Function Watch-VolvoCar
     $CarDataJson = $global:MyData.CarData | ConvertFrom-Json
     If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_DISCONNECTED'){
 
-        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'Value'='A'})  -MemberType NoteProperty
+        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
 
     }
     If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
         If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'Value'='C'})  -MemberType NoteProperty
-    
+            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
+
         }else{ 
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'Value'='B'})  -MemberType NoteProperty
+            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
         }
+    }
+
+    If ($true -eq $Global:config.'Weather.Enabled'){
+        $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
+        $CarDataJson.data| add-member -Name "SunHoursToday" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursToday')"})  -MemberType NoteProperty
     }
    
     $Global:MyData.CarData = $CarDataJson | ConvertTo-Json
@@ -566,11 +572,12 @@ Function Get-NewVolvoToken
     
     )
 
-    $Header = Set-Header -HeaderParameter @{
-        'authorization' = 'Basic aDRZZjBiOlU4WWtTYlZsNnh3c2c1WVFxWmZyZ1ZtSWFEcGhPc3kxUENhVXNpY1F0bzNUUjVrd2FKc2U0QVpkZ2ZJZmNMeXc='
+    $Header = Set-Header -HeaderParameter @{        
         'content-type' = 'application/x-www-form-urlencoded'
         'accept' = 'application/json'
     }
+
+    $Header = Set-Header -CurrentHeader $Header -HeaderParameter (Get-Header)
 
     Try {
         $NewTokenRaw = Invoke-WebRequest `
@@ -625,14 +632,14 @@ Function Confirm-VolvoAuthentication
     Try{
         $OauthToken = Load-TokenFromDisk
     } Catch {
-        Write-Error -Message "$($_.Exception.Message)"
+        Write-LogEntry -Severity 0 -Message "$($_.Exception.Message)"
         Throw 'No token found on disk'
     }
 
     Try{
         $Global:Config = Import-ConfigVariable
     } Catch {
-        Write-Error -Message "$($_.Exception.Message)"
+        Write-LogEntry -Severity 0 -Message "$($_.Exception.Message)"
         Throw 'Could not load config'
     }
     
@@ -754,7 +761,7 @@ Function Write-LogEntry
 		Write a entry in the log based on the severity level of the message
 	
 	.EXAMPLE
-		Load-TokenFromDisk
+		Write-LogEntry
 #>
 
     [CmdletBinding()]
@@ -770,7 +777,7 @@ Function Write-LogEntry
 
     #Information
     If ($Severity -eq 0){
-        If ($Global:Config.LogLevel -ge 0){
+        If ($Global:Config.'Log.Level' -ge 0){
             "$(Get-Date -Format "yyyyMMdd-HHmm ")Info: $Message" | Out-File -Append -FilePath ./volvo4evcc.log
             
         }
@@ -779,7 +786,7 @@ Function Write-LogEntry
 
     #Warning
     If ($Severity -eq 1){
-        If ($Global:Config.LogLevel -ge 1){
+        If ($Global:Config.'Log.Level' -ge 1){
             "$(Get-Date -Format "yyyyMMdd-HHmm ")Warning: $Message" | Out-File -Append -FilePath ./volvo4evcc.log
             
         }
@@ -788,10 +795,109 @@ Function Write-LogEntry
 
     #Debug
     If ($Severity -eq 2){
-        If ($Global:Config.LogLevel -ge 2){
+        If ($Global:Config.'Log.Level' -ge 2){
             "$(Get-Date -Format "yyyyMMdd-HHmm ")Debug: $Message" | Out-File -Append -FilePath ./volvo4evcc.log
             
         }
         Write-Debug -Message $Message   
     }
+}
+
+Function Get-SunHours
+{
+<#
+	.SYNOPSIS
+		Get the sun hours for the comming days
+	
+	.DESCRIPTION
+		Get the sun hours for the comming days where the sun is delivering PV 
+	
+	.EXAMPLE
+		Get-SunHours
+#>
+
+    [CmdletBinding()]
+    Param ()
+    $Api = "https://api.open-meteo.com/v1/forecast?latitude=$($Global:Config.'Weather.latitude'| ConvertFrom-SecureString -AsPlainText)&longitude=$($Global:Config.'Weather.longitude'| ConvertFrom-SecureString -AsPlainText)&daily=sunshine_duration&forecast_days=16"
+    $Daily = Invoke-RestMethod -Uri $Api -Method 'get'
+
+    $ForecastDaily = @()
+    $Counter = 0
+    foreach ($Time in $Daily.daily.time)
+    {
+        $TempObject = New-Object -TypeName "PSCustomObject"
+        $TempObject | Add-Member -memberType 'noteproperty' -name 'Time' -Value $Daily.daily.time[$counter]
+        $TempObject | Add-Member -memberType 'noteproperty' -name 'SunHours' -Value ([math]::Round($Daily.daily.sunshine_duration[$counter]/3600, 1))
+        $Counter++
+        $ForecastDaily += $TempObject
+    }
+
+    Return $ForecastDaily
+}
+
+
+Function Update-SunHours
+{
+    <#
+	.SYNOPSIS
+		Update the sun hours for the comming days
+	
+	.DESCRIPTION
+		Update the sun hours for the comming days where the sun is delivering PV 
+	
+	.EXAMPLE
+		Update-SunHours
+#>
+
+    [CmdletBinding()]
+    Param ()
+
+    Write-LogEntry -Severity 0 -Message 'Weather - Testing weather settings'
+
+    $Sunhours = Get-Sunhours
+
+    $Evcc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/state" -Method get
+    $TargetVehicle = $evcc.result.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
+
+    if($SunHours){
+        $SunHours.SunHours[0..($Global:Config.'Weather.SunHoursDaysDevider'-1)] | ForEach-Object -Begin {$TotalSunHours = 0} -Process {$TotalSunHours += $_}
+        If (($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -ge $Global:Config.'Weather.SunHoursHigh'){
+            Write-LogEntry -Severity 0 -Message "Weather - More than enough sun"
+            
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocLow')" -Method Post
+
+        }elseIf (($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -ge $Global:Config.'Weather.SunHoursMedium'){
+            Write-LogEntry -Severity 0 -Message "Weather - Medium sun"
+            
+            #Overwrite the 3 day forecast if today is verry sunny
+            If ($SunHours.SunHours[0] -gt $Global:Config.'Weather.SunHoursMedium')
+            {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocLow'
+                Write-LogEntry -Severity 0 -Message "Weather - Daily overwrite As today has more sun"
+            }else {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocMedium'
+            }
+
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue)" -Method Post
+
+        }elseif(($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -lt $Global:Config.'Weather.SunHoursMedium'){
+            Write-LogEntry -Severity 0 -Message "Weather - Not enough sun"
+            
+            #Overwrite the 3 day forecast if today is verry sunny
+            If ($SunHours.SunHours[0] -gt $Global:Config.'Weather.SunHoursMedium')
+            {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocLow'
+                Write-LogEntry -Severity 0 -Message "Weather - Daily overwrite As today has more sun"
+            }else {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocHigh'
+            }
+
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue" -Method Post
+
+        }
+    }
+
+    $Global:Config.'Weather.SunHoursTotalAverage' = $TotalSunHours / 3
+    $Global:Config.'Weather.SunHoursToday' = $SunHours.SunHours[0]
+    
 }
