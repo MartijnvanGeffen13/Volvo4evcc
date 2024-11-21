@@ -18,6 +18,7 @@ Currently we are in Release state of Rc3. this versions seems to run stable , do
 - ** Request minimal Oauth scope in auth session to improve security (Token does not include unlock or coordinate permissions)
 - ** Handle all credentials encrypted at all times
 - ** Volvo4Evcc is using a super light weight web instance to host the JSON response meaning no MQTT or extra broker is needed.
+- ** Reduction in 80% of API traffic VS Volvo2MQTT 
 - Support for Volvo 2FA authentication
 - Application is Multi threaded to increase flexability 
 - Direct EVCC Yaml intergration
