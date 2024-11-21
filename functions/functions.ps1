@@ -184,24 +184,26 @@ Function Start-Volvo4Evcc
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
+
+            #Get weather forecast and set MinSOC if needed
+            If ($true -eq $Global:Config.'Weather.Enabled' -and ($RunCount%60) -eq 0){
+                Update-SunHours
+            }
+
+
             #Get Volvo data 5 times slower than every poll
             If ($false -eq $EvccData.Connected -and ($RunCount%60) -eq 0){
-            
-                #Get weather forecast and set MinSOC if needed
-                If ($true -eq $Global:config.'Weather.Enabled'){
-                    Update-SunHours
-                }
 
                 Write-LogEntry -Severity 0 -Message 'Not Connected - Super Slow Refresh of volvo SOC data - once every hour'
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
 
             }
-            
+
             #Get Volvo data if this is the first poll
             If ($RunCount -eq 1){
                 #Get weather forecast and set MinSOC if needed
-                If ($true -eq $Global:config.'Weather.Enabled'){
+                If ($true -eq $Global:Config.'Weather.Enabled'){
                     Update-SunHours
                 }
                 Write-LogEntry -Severity 0 -Message "Startup with Connected:$($EvccData.Connected) - Charging:$($EvccData.Charging)"
