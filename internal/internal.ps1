@@ -576,6 +576,8 @@ Function Get-NewVolvoToken
         'accept' = 'application/json'
     }
 
+    $Header = Set-Header -CurrentHeader $Header -HeaderParameter (Get-Header)
+
     Try {
         $NewTokenRaw = Invoke-WebRequest `
         -Uri $Global:Config.'Url.Oauth_Token'`
