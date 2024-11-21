@@ -868,12 +868,28 @@ Function Update-SunHours
         }elseIf (($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -ge $Global:Config.'Weather.SunHoursMedium'){
             Write-LogEntry -Severity 0 -Message "Weather - Medium sun"
             
-            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocMedium')" -Method Post
+            #Overwrite the 3 day forecast if today is verry sunny
+            If ($SunHours.SunHours[0] -gt $Global:Config.'Weather.SunHoursMedium')
+            {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocLow'
+            }else {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocMedium'
+            }
+
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue)" -Method Post
 
         }elseif(($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -lt $Global:Config.'Weather.SunHoursMedium'){
             Write-LogEntry -Severity 0 -Message "Weather - Not enough sun"
             
-            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocHigh')" -Method Post
+            #Overwrite the 3 day forecast if today is verry sunny
+            If ($SunHours.SunHours[0] -gt $Global:Config.'Weather.SunHoursMedium')
+            {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocLow'
+            }else {
+                $MinSocValue = $Global:Config.'Weather.SunHoursMinsocHigh'
+            }
+
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue" -Method Post
 
         }
     }
