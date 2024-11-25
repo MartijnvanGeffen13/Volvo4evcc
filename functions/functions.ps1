@@ -95,7 +95,17 @@ Function Set-VolvoAuthentication
     $Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
     $Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
     $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
-    $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
+    
+    Do{
+        $CarSupport = Read-Host -Prompt 'Do you need single car or multi car support - {S}ingle / {M}ulti ?'
+    }While($CarSupport -notmatch "^[smSM]{1}$")
+    If ($CarSupport -eq "S"){
+        $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
+    }else{
+
+        $Global:Config.'Car.Vin' = (Read-Host -Prompt 'VIN as comma seperated list no qoutes - example: YJHKDGSTS65G,YHFGS45FJDT').split(",") | ForEach-Object -Process {$_ | ConvertTo-SecureString -AsPlainText}
+    }
+
     $Global:Config.'Url.Evcc' = Read-Host -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
     #Reset OTP on every export
     $Global:Config.'Credentials.Otp' = '111111'

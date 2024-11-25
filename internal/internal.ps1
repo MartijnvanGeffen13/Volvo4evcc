@@ -376,7 +376,7 @@ Function Start-RestBrokerService
         },
         "chargingConnectionStatus": {
             "value": "Startup"
-        }
+        },
         "EvccStatus": {
             "value": "A"
         }
@@ -483,42 +483,58 @@ Function Watch-VolvoCar
         [hashtable]$Token
     )
 
-    $CarData = Invoke-WebRequest `
-    -Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
-    -Method 'get' `
-    -Headers @{
-        'vcc-api-key' = $Global:Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
-        'content-type' = 'application/json'
-        'accept' = '*/*'
-        'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
-    }
+    $JsonResultTable = New-Object PSCustomObject
 
-    $CarDataJson = ($CarData.RawContent -split '(?:\r?\n){2,}')[1]
-    $Global:MyData.CarData = $CarDataJson
-    $CarDataJson = $global:MyData.CarData | ConvertFrom-Json
-    If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_DISCONNECTED'){
+    0..($Global:Config.'Car.Vin'.count-1) | ForEach-Object -Process {
 
-        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
+        #Empty itterative variables to prevent pollution in loop
+        $CarData = $Null
+        $CarDataJson = $Null
 
-    }
-    If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
-        If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
+        $Itteration = $_
 
-        }else{ 
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
+        $CarData = Invoke-WebRequest `
+        -Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Global:Config.'Car.Vin'[$Itteration] | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
+        -Method 'get' `
+        -Headers @{
+            'vcc-api-key' = $Global:Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
+            'content-type' = 'application/json'
+            'accept' = '*/*'
+            'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
         }
+
+        $CarDataJson = ($CarData.RawContent -split '(?:\r?\n){2,}')[1] | ConvertFrom-Json
+        #Looks like not needed as we set this in end
+        #$Global:MyData."CarData$Itteration" = $CarDataJson
+        #$CarDataJson = $global:MyData."CarData$Itteration" 
+        If ($CarDataJson.data.chargingConnectionStatus.Value -eq 'CONNECTION_STATUS_DISCONNECTED'){
+
+            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
+
+        }
+
+        If ($CarDataJson.data.chargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
+            If ($CarDataJson.data.chargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
+                $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
+
+            }else{ 
+                $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
+            }
+        }
+        
+        $JsonResultTable | add-member -Name "Car$itteration" -value $CarDataJson.data -MemberType NoteProperty
+        
     }
 
     If ($true -eq $Global:config.'Weather.Enabled'){
-        $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
-        $CarDataJson.data| add-member -Name "SunHoursToday" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursToday')"})  -MemberType NoteProperty
+        $JsonResultTable| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
+        $JsonResultTable| add-member -Name "SunHoursToday" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursToday')"})  -MemberType NoteProperty
     }
-   
-    $Global:MyData.CarData = $CarDataJson | ConvertTo-Json
-    $Global:MyData | Export-Clixml -Path './MyData.xml'
 
+    $Global:MyData."CarData" = $JsonResultTable | ConvertTo-Json
+    $Global:MyData | Export-Clixml -Path './MyData.xml'
 }
+
 
 Function Get-EvccData
 {
