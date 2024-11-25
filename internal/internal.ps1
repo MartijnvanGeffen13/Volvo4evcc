@@ -873,14 +873,16 @@ Function Update-SunHours
     $Sunhours = Get-Sunhours
 
     $Evcc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/state" -Method get
-    $TargetVehicle = $evcc.result.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
+    $TargetVehicles = $evcc.result.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
 
     if($SunHours){
         $SunHours.SunHours[0..($Global:Config.'Weather.SunHoursDaysDevider'-1)] | ForEach-Object -Begin {$TotalSunHours = 0} -Process {$TotalSunHours += $_}
         If (($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -ge $Global:Config.'Weather.SunHoursHigh'){
             Write-LogEntry -Severity 0 -Message "Weather - More than enough sun"
             
-            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocLow')" -Method Post
+            0..($TargetVehicles.count-1) | ForEach-Object -Process {
+                $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicles[$_].Name)/minsoc/$($Global:Config.'Weather.SunHoursMinsocLow')" -Method Post
+            }
 
         }elseIf (($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -ge $Global:Config.'Weather.SunHoursMedium'){
             Write-LogEntry -Severity 0 -Message "Weather - Medium sun"
@@ -893,8 +895,9 @@ Function Update-SunHours
             }else {
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocMedium'
             }
-
-            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue)" -Method Post
+            0..($TargetVehicles.count-1) | ForEach-Object -Process {
+                $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicles[$_].Name)/minsoc/$MinSocValue)" -Method Post
+            }
 
         }elseif(($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -lt $Global:Config.'Weather.SunHoursMedium'){
             Write-LogEntry -Severity 0 -Message "Weather - Not enough sun"
@@ -908,7 +911,9 @@ Function Update-SunHours
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocHigh'
             }
 
-            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue" -Method Post
+            0..($TargetVehicles.count-1) | ForEach-Object -Process {
+                $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicles[$_].Name)/minsoc/$MinSocValue" -Method Post
+            }
 
         }
     }
