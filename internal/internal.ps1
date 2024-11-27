@@ -509,6 +509,11 @@ Function Watch-VolvoCar
             $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
         }
     }
+    
+    If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
+    
+        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
+    }
 
     If ($true -eq $Global:config.'Weather.Enabled'){
         $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
