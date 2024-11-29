@@ -152,6 +152,7 @@ Function Start-Volvo4Evcc
     #Wrap in loop based on evcc data
     $Seconds = 15
     $RunCount = 0
+    $LastPulseEvccData = @($false)
     do 
     {
         #Clean itterative variables
