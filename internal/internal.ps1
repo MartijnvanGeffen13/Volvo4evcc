@@ -901,7 +901,7 @@ Function Update-SunHours
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocMedium'
             }
             0..($TargetVehicles.count-1) | ForEach-Object -Process {
-                $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicles[$_].Name)/minsoc/$MinSocValue)" -Method Post
+                $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicles[$_].Name)/minsoc/$MinSocValue" -Method Post
             }
 
         }elseif(($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -lt $Global:Config.'Weather.SunHoursMedium'){
