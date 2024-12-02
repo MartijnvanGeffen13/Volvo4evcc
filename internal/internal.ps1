@@ -508,9 +508,7 @@ Function Watch-VolvoCar
         }else{ 
             $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
         }
-    }
-    
-    If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
+    }elseIf ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
     
         $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
     }
