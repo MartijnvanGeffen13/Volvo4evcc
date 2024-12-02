@@ -140,10 +140,12 @@ Function Start-Volvo4Evcc
     $Token = Confirm-VolvoAuthentication
 
     #Wrap in loop based on evcc data
-    $Seconds = 60
-    $RunCount = 0
+    $Seconds = 15
+    [Int64]$RunCount = 0
     do 
     {
+        #Clean itterative variables
+
         #Increase run count
         $RunCount++
 
@@ -166,19 +168,20 @@ Function Start-Volvo4Evcc
 
         }
         #Get EvccData
+        #If multiple loadpoints Array returns all loadpoints. Testing for true means if any is true it will run.
         $EvccData = Get-EvccData
         $MessageDone = $False
 
         If ($True -eq $EvccData.SourceOk){
             #Get Volvo data 2 times slower than every poll
-            If ($true -eq $EvccData.Connected -and $true -eq $EvccData.Charging -and ($RunCount%2) -eq 0){
+            If ($true -eq $EvccData.Connected -and $true -eq $EvccData.Charging -and ($RunCount%8) -eq 0){
             
                 Write-LogEntry -Severity 0 -Message 'Connected - charging - Fast refresh of volvo SOC data'
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
             #Get Volvo data 5 times slower than every poll
-            If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%5) -eq 0){
+            If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%20) -eq 0){
                 #Also cycle web service
                 Write-LogEntry -Severity 0 -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
                 $MessageDone = $True
@@ -186,13 +189,13 @@ Function Start-Volvo4Evcc
             }
 
             #Get weather forecast and set MinSOC if needed
-            If ($true -eq $Global:Config.'Weather.Enabled' -and ($RunCount%60) -eq 0){
+            If ($true -eq $Global:Config.'Weather.Enabled' -and ($RunCount%240) -eq 0){
                 Update-SunHours
             }
 
 
             #Get Volvo data 5 times slower than every poll
-            If ($false -eq $EvccData.Connected -and ($RunCount%60) -eq 0){
+            If ($false -eq $EvccData.Connected -and ($RunCount%240) -eq 0){
 
                 Write-LogEntry -Severity 0 -Message 'Not Connected - Super Slow Refresh of volvo SOC data - once every hour'
                 $MessageDone = $True
@@ -210,6 +213,17 @@ Function Start-Volvo4Evcc
                 $MessageDone = $True
                 Watch-VolvoCar -Token $Token
             }
+
+            
+            $EmergencyUpdateCompare = Compare-Object -ReferenceObject $LastPulseEvccData -DifferenceObject $EvccData.Connected
+            If ($EmergencyUpdateCompare.SideIndicator -contains "=>" -or $EmergencyUpdateCompare -contains "<="){
+                #If there is a differance in connection state do a emergency update without waiting for pull
+                Write-LogEntry -Severity 0 -Message "Emergency Push due to connection dif was:$LastPulseEvccData - now is:$($EvccData.Connected)"
+                $MessageDone = $True
+                Watch-VolvoCar -Token $Token
+            }
+
+
         }else{
             Write-LogEntry -Severity 1 -Message 'Evcc data not found or not reachable'
 
@@ -221,8 +235,10 @@ Function Start-Volvo4Evcc
             Write-LogEntry -Severity 0 -Message "Just a Evcc pull and token test no action taken - Token valid for another : $ValidFor minutes"
         }
 
+        #Save last run
+        $LastPulseEvccData = $EvccData.Connected
         Start-Sleep -Seconds $Seconds
         
     }while ($True) 
 
-}
+} 

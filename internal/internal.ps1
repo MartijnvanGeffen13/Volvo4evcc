@@ -883,7 +883,7 @@ Function Update-SunHours
                 $MinSocValue = $Global:Config.'Weather.SunHoursMinsocMedium'
             }
 
-            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue)" -Method Post
+            $ResultSetNewMinSoc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/vehicles/$($TargetVehicle.Name)/minsoc/$MinSocValue" -Method Post
 
         }elseif(($TotalSunHours / $Global:Config.'Weather.SunHoursDaysDevider') -lt $Global:Config.'Weather.SunHoursMedium'){
             Write-LogEntry -Severity 0 -Message "Weather - Not enough sun"
