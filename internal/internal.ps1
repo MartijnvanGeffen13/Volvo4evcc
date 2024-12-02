@@ -527,7 +527,7 @@ Function Watch-VolvoCar
             $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
         }
         
-        $JsonResultTable | add-member -Name "Car$itteration" -value $CarDataJson.data -MemberType NoteProperty
+        $JsonResultTable | add-member -Name "$($Global:Config.'Car.Names'[$itteration])" -value $CarDataJson.data -MemberType NoteProperty
         
     }
 
