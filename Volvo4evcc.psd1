@@ -4,7 +4,7 @@
     RootModule = 'Volvo4evcc.psm1'
     
     # Version number of this module.
-    ModuleVersion = '1.8'
+    ModuleVersion = '1.8.1'
     
     # ID used to uniquely identify this module
     GUID = '50047ffd-8482-4a42-94f3-52bbf7515d93'
