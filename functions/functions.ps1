@@ -106,6 +106,13 @@ Function Set-VolvoAuthentication
         $Global:Config.'Car.Vin' = (Read-Host -Prompt 'VIN as comma seperated list no qoutes - example: YJHKDGSTS65G,YHFGS45FJDT').split(",") | ForEach-Object -Process {$_ | ConvertTo-SecureString -AsPlainText}
     }
 
+    $TempVin = @()
+    Foreach ($Vin in ($Global:Config."car.vin" | ConvertFrom-SecureString -AsPlainText))
+    {
+        $TempVin += Read-Host -Prompt "(no special chars or spaces as we use this in the api)`n Car name for $Vin - Example EX30"
+    }
+    $Global:Config.'Car.Names' = $TempVin
+
     $Global:Config.'Url.Evcc' = Read-Host -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
     #Reset OTP on every export
     $Global:Config.'Credentials.Otp' = '111111'

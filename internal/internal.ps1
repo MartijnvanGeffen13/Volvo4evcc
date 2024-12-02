@@ -511,23 +511,19 @@ Function Watch-VolvoCar
 
             $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
 
-        }
-
-        If ($CarDataJson.data.chargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
+        }elseif ($CarDataJson.data.chargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
             If ($CarDataJson.data.chargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
                 $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
 
             }else{ 
                 $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
             }
-        }
-
-        If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
+        }elseif ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
 
             $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
         }
         
-        $JsonResultTable | add-member -Name "Car$itteration" -value $CarDataJson.data -MemberType NoteProperty
+        $JsonResultTable | add-member -Name "$($Global:Config.'Car.Names'[$itteration])" -value $CarDataJson.data -MemberType NoteProperty
         
     }
 
