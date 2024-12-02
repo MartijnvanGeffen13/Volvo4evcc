@@ -10,5 +10,5 @@ foreach ($File in (Get-ChildItem "$PSScriptRoot\functions" -Recurse -Filter *.ps
 
 foreach ($File in (Get-ChildItem "$PSScriptRoot\internal" -Recurse -Filter *.ps1)) {
 	. $File.FullName
-}
+} 
 
