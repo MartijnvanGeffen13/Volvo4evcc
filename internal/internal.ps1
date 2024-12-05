@@ -205,8 +205,8 @@ Function Import-ConfigVariable
     )
 
     If ($Reload){
-        If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml" ) {
-            $Global:Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
+        If (Test-Path -Path "/volvo4evcc/volvo4evccconfig.xml" ) {
+            $Global:Config = Import-Clixml -Path "/volvo4evcc/volvo4evccconfig.xml" -ErrorAction SilentlyContinue
             return $Global:Config
         }else{
             Throw 'Please run Set-VolvoAuthentication first to configure this module'
@@ -217,8 +217,8 @@ Function Import-ConfigVariable
         If (-not($Global:Config.'credentials.username')){
 
             #Force reload attempt from config
-            If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml" ) {
-                $Global:Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml" -ErrorAction SilentlyContinue
+            If (Test-Path -Path "$/volvo4evcc/volvo4evccconfig.xml" ) {
+                $Global:Config = Import-Clixml -Path "/volvo4evcc/volvo4evccconfig.xml" -ErrorAction SilentlyContinue
             }else{
                 Throw 'Please run Set-VolvoAuthentication first to configure this module'
             }
@@ -230,9 +230,9 @@ Function Import-ConfigVariable
             }
         }
     }else{
-        If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml"){
-            Write-LogEntry -Severity 1 -Message "$((Get-Location).path)\volvo4evccconfig.xml not found"
-            $Global:Config = Import-Clixml -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+        If (Test-Path -Path "/volvo4evcc/volvo4evccconfig.xml"){
+            Write-LogEntry -Severity 1 -Message "/volvo4evcc/volvo4evccconfig.xml not found"
+            $Global:Config = Import-Clixml -Path "/volvo4evcc/volvo4evccconfig.xml"
         }else{
             Write-LogEntry -Severity 1 -Message 'volvo4evccconfig.xml Does not exist'
             Throw 'Please run Set-VolvoAuthentication first to configure this module'

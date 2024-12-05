@@ -59,8 +59,8 @@ Function Set-VolvoAuthentication
         
         Write-LogEntry -Severity 0 -Message "Weather info writen to config"
         
-        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
-        Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+        Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
+        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
 
         return
     }
@@ -73,8 +73,8 @@ Function Set-VolvoAuthentication
         $Global:Config.'Credentials.Otp' = $OtpToken
         Write-LogEntry -Severity 0 -Message "Otp token writen to config"
         
-        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
-        Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+        Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
+        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
 
         return
     }
@@ -86,8 +86,8 @@ Function Set-VolvoAuthentication
         $Global:Config.'Credentials.Otp' = '111111'
         Write-LogEntry -Severity 2 -Message "Otp token Reset in config"
         
-        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
-        Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+        Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
+        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
 
         return
     }
@@ -117,8 +117,8 @@ Function Set-VolvoAuthentication
     #Reset OTP on every export
     $Global:Config.'Credentials.Otp' = '111111'
     
-    Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
-    Write-LogEntry -Severity 0 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
+    Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
+    Write-LogEntry -Severity 0 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
 
     return $Global:Config
 
@@ -146,8 +146,8 @@ Function Start-Volvo4Evcc
 
 
     #On first start check if config was saved
-    If (!(Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml")){
-        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+    If (!(Test-Path -Path "/volvo4evcc/volvo4evccconfig.xml")){
+        Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
     }
 
     #Start the web component in a runspace Recycle old runspace if this exist to free up web port
