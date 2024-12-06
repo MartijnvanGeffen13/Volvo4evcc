@@ -60,7 +60,7 @@ Function Set-VolvoAuthentication
         Write-LogEntry -Severity 0 -Message "Weather info writen to config"
         
         Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
-        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
+        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evccconfig.xml"
 
         return
     }
@@ -74,7 +74,7 @@ Function Set-VolvoAuthentication
         Write-LogEntry -Severity 0 -Message "Otp token writen to config"
         
         Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
-        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
+        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evccconfig.xml"
 
         return
     }
@@ -87,7 +87,7 @@ Function Set-VolvoAuthentication
         Write-LogEntry -Severity 2 -Message "Otp token Reset in config"
         
         Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
-        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
+        Write-LogEntry -Severity 2 -Message "Exporting config to /volvo4evccconfig.xml"
 
         return
     }
@@ -118,7 +118,7 @@ Function Set-VolvoAuthentication
     $Global:Config.'Credentials.Otp' = '111111'
     
     Export-Clixml -InputObject $Global:Config -Path "/volvo4evcc/volvo4evccconfig.xml"
-    Write-LogEntry -Severity 0 -Message "Exporting config to /volvo4evcc/volvo4evccconfig.xml"
+    Write-LogEntry -Severity 0 -Message "Exporting config to /volvo4evccconfig.xml"
 
     return $Global:Config
 

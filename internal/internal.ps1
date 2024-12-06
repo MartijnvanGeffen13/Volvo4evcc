@@ -16,8 +16,8 @@ Function Load-TokenFromDisk
     )
 
     $Token = @{}
-    If (Test-Path -Path './EncryptedOAuthToken.xml') {
-        $Token = Import-Clixml -Path './EncryptedOAuthToken.xml'
+    If (Test-Path -Path '/volvo4evcc/EncryptedOAuthToken.xml') {
+        $Token = Import-Clixml -Path '/volvo4evcc/EncryptedOAuthToken.xml'
     }else {
         Write-LogEntry -Severity 1 -Message 'Access Token Not found on disk'
         $Token.AccessToken = 'Not Found on Disk'
@@ -217,7 +217,7 @@ Function Import-ConfigVariable
         If (-not($Global:Config.'credentials.username')){
 
             #Force reload attempt from config
-            If (Test-Path -Path "$/volvo4evcc/volvo4evccconfig.xml" ) {
+            If (Test-Path -Path "/volvo4evcc/volvo4evccconfig.xml" ) {
                 $Global:Config = Import-Clixml -Path "/volvo4evcc/volvo4evccconfig.xml" -ErrorAction SilentlyContinue
             }else{
                 Throw 'Please run Set-VolvoAuthentication first to configure this module'
@@ -319,7 +319,7 @@ Function Initialize-VolvoAuthenticationTradeOtpForOauth
     #Dont need the session anymore
     #$Token.Websession = $AuthenticationRawSession
 
-    $Token | Export-Clixml -Path './EncryptedOAuthToken.xml'
+    $Token | Export-Clixml -Path '/volvo4evcc/EncryptedOAuthToken.xml'
 
     #Remove variables used during oauth request 
     Remove-Variable -Name AuthenticationRequestOauthJson
@@ -352,8 +352,8 @@ Function Start-RestBrokerService
 
 
     #On startup load last known data into web service
-    If(Test-Path -Path './MyData.xml'){
-        $global:MyData = Import-Clixml -Path './MyData.xml'
+    If(Test-Path -Path '/volvo4evcc/MyData.xml'){
+        $global:MyData = Import-Clixml -Path '/volvo4evcc/MyData.xml'
     }Else{
         $global:MyData.CarData = @"
 {
@@ -533,7 +533,7 @@ Function Watch-VolvoCar
     }
 
     $Global:MyData."CarData" = $JsonResultTable | ConvertTo-Json
-    $Global:MyData | Export-Clixml -Path './MyData.xml'
+    $Global:MyData | Export-Clixml -Path '/volvo4evcc/MyData.xml'
 }
 
 
@@ -616,7 +616,7 @@ Function Get-NewVolvoToken
         #Dont need the session anymore
         #$Token.Websession = $AuthenticationRawSession
 
-        $TempToken | Export-Clixml -Path './EncryptedOAuthToken.xml'
+        $TempToken | Export-Clixml -Path '/volvo4evcc/EncryptedOAuthToken.xml'
 
     } Catch {
     
