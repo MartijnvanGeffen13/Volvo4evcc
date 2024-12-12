@@ -153,9 +153,10 @@ Function Start-Volvo4Evcc
         If ($Token.ValidTimeToken.AddSeconds(-120) -lt (Get-date)){
             $Token.Source = 'Invalid-Expired'
             Write-LogEntry -Severity 0 -Message 'Token is expired trying to get new one'
-
+            $TokenTemp = $Token
+            $Token = $null
             Try{
-                $Token = Get-NewVolvoToken -Token $Token
+                $Token = Get-NewVolvoToken -Token $TokenTemp
                 Write-LogEntry -Severity 2 -Message 'Token is refreshed succesfully'
             } Catch {
                 If ($_.Exception.Message){
@@ -163,7 +164,29 @@ Function Start-Volvo4Evcc
                 }else{
                     Write-LogEntry -Severity 1 -Message "$($_.Exception)"
                 }
-                Throw 'Could not get new token please restart with full auth and 2FA'
+                $counter = 1
+                Do {
+                    $counter++
+                    Try{
+                        $Token = Get-NewVolvoToken -Token $TokenTemp
+                        Write-LogEntry -Severity 2 -Message "Token is refreshed succesfully on attempt : $counter"
+                    } Catch {
+                        If ($_.Exception.Message){
+                            Write-LogEntry -Severity 1 -Message "$($_.Exception.Message)"
+                        }else{
+                            Write-LogEntry -Severity 1 -Message "$($_.Exception)"
+                        }        
+                    }
+                    Start-Sleep -Seconds 5
+                }while ($null -eq $Token -or $Counter -gt 4) 
+
+                If ($Null -eq $Token){
+                    Throw 'Could not get new token please restart with full auth and 2FA'
+                }
+                
+            }finally{
+                #Remove temp token
+                $TokenTemp = $null
             }
 
         }
