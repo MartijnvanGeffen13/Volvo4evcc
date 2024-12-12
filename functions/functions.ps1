@@ -214,15 +214,16 @@ Function Start-Volvo4Evcc
                 Watch-VolvoCar -Token $Token
             }
 
-            
-            $EmergencyUpdateCompare = Compare-Object -ReferenceObject $LastPulseEvccData -DifferenceObject $EvccData.Connected
-            If ($EmergencyUpdateCompare.SideIndicator -contains "=>" -or $EmergencyUpdateCompare -contains "<="){
-                #If there is a differance in connection state do a emergency update without waiting for pull
-                Write-LogEntry -Severity 0 -Message "Emergency Push due to connection dif was:$LastPulseEvccData - now is:$($EvccData.Connected)"
-                $MessageDone = $True
-                Watch-VolvoCar -Token $Token
+            #If we have last pulse data see if a emergency update is needed
+            if ($LastPulseEvccData){
+                $EmergencyUpdateCompare = Compare-Object -ReferenceObject $LastPulseEvccData -DifferenceObject $EvccData.Connected
+                If ($EmergencyUpdateCompare.SideIndicator -contains "=>" -or $EmergencyUpdateCompare -contains "<="){
+                    #If there is a differance in connection state do a emergency update without waiting for pull
+                    Write-LogEntry -Severity 0 -Message "Emergency Push due to connection dif was:$LastPulseEvccData - now is:$($EvccData.Connected)"
+                    $MessageDone = $True
+                    Watch-VolvoCar -Token $Token
+                }
             }
-
 
         }else{
             Write-LogEntry -Severity 1 -Message 'Evcc data not found or not reachable'
