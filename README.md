@@ -7,22 +7,23 @@ This addon for EVCC will provide the interface between the volvo API and EVCC. I
 Currently we are in Release state of Version 1.5. this versions seems to run stable , documentation is in the wiki. 
 
 <h3>Current State:</h3>
-- V1.5 released in the main branch and running stable in production now for over 10 days (Linux host)
+- V1.8.1 released in the main branch and running stable in production now for over 50 days (Linux host)
 - Weather Module addon available and guide is in the wiki
 
 <h3>Features in current RC3 release module: (See wiki for instalation instructions done)</h3>
 
 - ** Car status is auto detectable by EVCC
+- ** Multi car / charger branch to support multiple volvo vehicles and chargers and still working with auto dectect. ( If you need this use the multiple car branch version 1.10.1)
 - ** No Constant live poll Only poll when connected and charging. Update poll intervall based on connection and SOC (high interval when charging, low interval when connected but not charging, super low interval when not connected)
 - ** Only pull data interresting for EVCC from API to increase security (Not exposing coordinates and door unlock to possible hackers) 
 - ** Request minimal Oauth scope in auth session to improve security (Token does not include unlock or coordinate permissions)
 - ** Handle all credentials encrypted at all times
 - ** Volvo4Evcc is using a super light weight web instance to host the JSON response meaning no MQTT or extra broker is needed.
 - ** Reduction in 80% of API traffic VS Volvo2MQTT, Meaning less traffic to your car and battery drain
+- ** Application is Multi threaded to increase flexability 
+- ** Auto application restarts and startup via crontab no matter if app is started allready
 - Support for Volvo 2FA authentication
-- Application is Multi threaded to increase flexability 
 - Direct EVCC Yaml intergration
-- Auto application restarts and startup via crontab no matter if app is started allready
 
 **Improvement over Volvo2MQTT
 
