@@ -4,7 +4,7 @@
 
 This addon for EVCC will provide the interface between the volvo API and EVCC. It supports the 2FA Auth flow and does not need a MQTT broker. This module is build as a dedicated EVCC module in contrast tot the Volvo2MQTT addon (That is native to Home assistend). This addon is build to improve on the issues Volvo2MQTT has and is not willing to fix for EVCC. As a bonus we have added functionality and greatly enhanced security. 
 
-Currently we are in Release state of Version 1.5. this versions seems to run stable , documentation is in the wiki. 
+Currently we are in Release state of Version 1.8.1 for the single car support.  See other branch for multiple car support. this versions seems to run stable , documentation is in the wiki. 
 
 <h3>Current State:</h3>
 - V1.8.1 released in the main branch and running stable in production now for over 50 days (Linux host)
