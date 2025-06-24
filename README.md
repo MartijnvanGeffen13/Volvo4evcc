@@ -7,6 +7,7 @@ This addon for EVCC will provide the interface between the volvo API and EVCC. I
 Currently we are in Release state of Version 2.0Alpha. this versions seems to run stable , documentation is in the wiki. 
 
 <h3>Current State:</h3>
+
 - V2.0 Release
 - Complete redesign of OAuth no longer relaying on OTP but true Oauth client flow as per VOLVO documentation. (No more faking the client)
 - Move to V2 API now that V1 is depricated
