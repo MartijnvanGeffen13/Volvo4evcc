@@ -38,81 +38,81 @@ Function Load-TokenFromDisk
     return $Token
 }
 
-Function Initialize-VolvoAuthenticationOtpRequest
-{
-<#
-	.SYNOPSIS
-		Start a new authentication setting validating full authentication
-	
-	.DESCRIPTION
-		Start a new authentication setting validating full authentication
-	
-	.EXAMPLE
-		Initialize-VolvoAuthentication
-#>
-
-    [CmdletBinding()]
-    Param (       	
-    )
-
-    #Test if we loaded config allready if not load now
-    $Global:Config = Import-ConfigVariable
-    
-
-    $StartHeader = @{
-
-        'User-Agent' = "vca-android/5.47.0"
-        'Accept-Encoding' = 'gzip'
-        'content-type'= 'application/json; charset=utf-8'
-    }
-
-    $HeaderStart = Set-Header -HeaderParameter $StartHeader
-    $Header = Set-Header -CurrentHeader $HeaderStart -HeaderParameter (Get-Header)
-
-    #This should be the very first call to the service so we store it in a session variable for automatic handeling of the cookies
-    Write-LogEntry -Severity 2 -Message "Initiate first web auth with claims to $(($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims'))"
-    
-    Try{
-        $AuthenticationFirstRequestRaw = Invoke-WebRequest -Uri ($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims') -Headers $Header -Method 'get' -SessionVariable AuthenticationRawSession
-    }catch {
-        Write-LogEntry -Severity 1 -Message "Failed to Authenticate - $($_.Exception.Message)"
-        Throw $_.Exception.Message
-    }
-    $AuthenticationFirstRequestJson = $AuthenticationFirstRequestRaw.Content | ConvertFrom-Json
-    
-    #Add required header for CheckUsernamePassword
-    $Header = Set-Header -CurrentHeader $Header -HeaderParameter @{'x-xsrf-header'='PingFederate'}
-
-    $CheckUsernamePasswordUrl = $AuthenticationFirstRequestJson._links.checkUsernamePassword.href + '?action=checkUsernamePassword'
-
-    #Purge Auth variable data from memory
-    Remove-Variable -Name AuthenticationFirstRequestJson
-    Remove-Variable -Name AuthenticationFirstRequestRaw
-
-    #Query URL without exposing a cred as variable
-    Write-LogEntry -Severity 2 -Message "Initiate authentication with username and password to get OTP emailed"
-    $AuthenticationOtpReceived = Invoke-WebRequest `
-    -Uri $CheckUsernamePasswordUrl `
-    -Method 'post' `
-    -Body (@{
-        'username' = $Global:Config.'Credentials.Username' | ConvertFrom-SecureString -AsPlainText
-        'password' = $Global:Config.'Credentials.Password' | ConvertFrom-SecureString -AsPlainText
-    } | ConvertTo-Json) `
-    -WebSession $AuthenticationRawSession `
-    -Headers $Header
-
-    $AuthenticationOtpReceivedJson = $AuthenticationOtpReceived.content | ConvertFrom-Json
-
-    $AuthReturnObject = @{
-
-        'CheckOtpUrl' =  $AuthenticationOtpReceivedJson._links.checkOtp.href + '?action=checkOtp'
-        'Websession' = $AuthenticationRawSession
-        'Header' = $Header
-
-    }
-
-    Return $AuthReturnObject
-}
+#cleanupFunction Initialize-VolvoAuthenticationOtpRequest
+#cleanup{
+#cleanup<#
+#cleanup	.SYNOPSIS
+#cleanup		Start a new authentication setting validating full authentication
+#cleanup	
+#cleanup	.DESCRIPTION
+#cleanup		Start a new authentication setting validating full authentication
+#cleanup	
+#cleanup	.EXAMPLE
+#cleanup		Initialize-VolvoAuthentication
+#cleanup#>
+#cleanup
+#cleanup    [CmdletBinding()]
+#cleanup    Param (       	
+#cleanup    )
+#cleanup
+#cleanup    #Test if we loaded config allready if not load now
+#cleanup    $Global:Config = Import-ConfigVariable
+#cleanup    
+#cleanup
+#cleanup    $StartHeader = @{
+#cleanup
+#cleanup        'User-Agent' = "vca-android/5.47.0"
+#cleanup        'Accept-Encoding' = 'gzip'
+#cleanup        'content-type'= 'application/json; charset=utf-8'
+#cleanup    }
+#cleanup
+#cleanup    $HeaderStart = Set-Header -HeaderParameter $StartHeader
+#cleanup    $Header = Set-Header -CurrentHeader $HeaderStart -HeaderParameter (Get-Header)
+#cleanup
+#cleanup    #This should be the very first call to the service so we store it in a session variable for automatic handeling of the cookies
+#cleanup    Write-LogEntry -Severity 2 -Message "Initiate first web auth with claims to $(($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims'))"
+#cleanup    
+#cleanup    Try{
+#cleanup        $AuthenticationFirstRequestRaw = Invoke-WebRequest -Uri ($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims') -Headers $Header -Method 'get' -SessionVariable AuthenticationRawSession
+#cleanup    }catch {
+#cleanup        Write-LogEntry -Severity 1 -Message "Failed to Authenticate - $($_.Exception.Message)"
+#cleanup        Throw $_.Exception.Message
+#cleanup    }
+#cleanup    $AuthenticationFirstRequestJson = $AuthenticationFirstRequestRaw.Content | ConvertFrom-Json
+#cleanup    
+#cleanup    #Add required header for CheckUsernamePassword
+#cleanup    $Header = Set-Header -CurrentHeader $Header -HeaderParameter @{'x-xsrf-header'='PingFederate'}
+#cleanup
+#cleanup    $CheckUsernamePasswordUrl = $AuthenticationFirstRequestJson._links.checkUsernamePassword.href + '?action=checkUsernamePassword'
+#cleanup
+#cleanup    #Purge Auth variable data from memory
+#cleanup    Remove-Variable -Name AuthenticationFirstRequestJson
+#cleanup    Remove-Variable -Name AuthenticationFirstRequestRaw
+#cleanup
+#cleanup    #Query URL without exposing a cred as variable
+#cleanup    Write-LogEntry -Severity 2 -Message "Initiate authentication with username and password to get OTP emailed"
+#cleanup    $AuthenticationOtpReceived = Invoke-WebRequest `
+#cleanup    -Uri $CheckUsernamePasswordUrl `
+#cleanup    -Method 'post' `
+#cleanup    -Body (@{
+#cleanup        'username' = $Global:Config.'Credentials.Username' | ConvertFrom-SecureString -AsPlainText
+#cleanup        'password' = $Global:Config.'Credentials.Password' | ConvertFrom-SecureString -AsPlainText
+#cleanup    } | ConvertTo-Json) `
+#cleanup    -WebSession $AuthenticationRawSession `
+#cleanup    -Headers $Header
+#cleanup
+#cleanup    $AuthenticationOtpReceivedJson = $AuthenticationOtpReceived.content | ConvertFrom-Json
+#cleanup
+#cleanup    $AuthReturnObject = @{
+#cleanup
+#cleanup        'CheckOtpUrl' =  $AuthenticationOtpReceivedJson._links.checkOtp.href + '?action=checkOtp'
+#cleanup        'Websession' = $AuthenticationRawSession
+#cleanup        'Header' = $Header
+#cleanup
+#cleanup    }
+#cleanup
+#cleanup    Return $AuthReturnObject
+#cleanup}
 
 
 Function Set-Header
@@ -161,29 +161,29 @@ Function Set-Header
 
 }
 
-Function Wait-UserOtpInput
-{
-<#
-	.SYNOPSIS
-		While the system has generated a OTP request we now need the user to provide it 
-        We will wait and attempt to harver the token for 5 minutes
-	
-	.DESCRIPTION
-		While the system has generated a OTP request we now need the user to provide it 
-        We will wait and attempt to harver the token for 5 minutes
-	
-	.EXAMPLE
-		Wait-UserOtpInput
-#>
-
-    [CmdletBinding()]
-    Param (       	
-    )
-
-    $Otp = Read-Host -AsSecureString -Prompt 'Please provide the OTP code sent to your email'
-
-    return $Otp
-}
+#cleanupFunction Wait-UserOtpInput
+#cleanup{
+#cleanup<#
+#cleanup	.SYNOPSIS
+#cleanup		While the system has generated a OTP request we now need the user to provide it 
+#cleanup        We will wait and attempt to harver the token for 5 minutes
+#cleanup	
+#cleanup	.DESCRIPTION
+#cleanup		While the system has generated a OTP request we now need the user to provide it 
+#cleanup        We will wait and attempt to harver the token for 5 minutes
+#cleanup	
+#cleanup	.EXAMPLE
+#cleanup		Wait-UserOtpInput
+#cleanup#>
+#cleanup
+#cleanup    [CmdletBinding()]
+#cleanup    Param (       	
+#cleanup    )
+#cleanup
+#cleanup    $Otp = Read-Host -AsSecureString -Prompt 'Please provide the OTP code sent to your email'
+#cleanup
+#cleanup    return $Otp
+#cleanup}
 
 
 Function Import-ConfigVariable
@@ -214,7 +214,7 @@ Function Import-ConfigVariable
     }
 
     If ($Global:Config){
-        If (-not($Global:Config.'credentials.username')){
+        If (-not($Global:Config.'Credentials.RedirectUri')){
 
             #Force reload attempt from config
             If (Test-Path -Path "$((Get-Location).path)\volvo4evccconfig.xml" ) {
@@ -224,7 +224,7 @@ Function Import-ConfigVariable
             }
             
             #Test again on reload
-            If (-not($Global:Config.'credentials.username')){
+            If (-not($Global:Config.'Credentials.RedirectUri') -or -not($Global:Config.'Credentials.ClientId') -or -not($Global:Config.'credentials.ClientSecret') -or -not($Global:Config.'credentials.VccApiKey') -or -not($Global:Config.'Car.Vin')){
                 Write-LogEntry -Severity 2 -Message 'Config variable found but no username key present after force reload'
                 Throw 'Please run Set-VolvoAuthentication first to configure this module'
             }
@@ -242,7 +242,7 @@ Function Import-ConfigVariable
     return $Global:Config
 }
 
-Function Initialize-VolvoAuthenticationTradeOtpForOauth
+Function Initialize-VolvoAuthenticationTradeOAuthCodeForOauthToken
 {
 <#
 	.SYNOPSIS
@@ -252,78 +252,59 @@ Function Initialize-VolvoAuthenticationTradeOtpForOauth
 		Trade OTP for Oauth token
 
 	.EXAMPLE
-		Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $AuthReturnObject
+		Initialize-VolvoAuthenticationTradeOtpForOauth 
 #>
     [CmdletBinding()]
     Param (
-        [Parameter(Mandatory=$true)]
-        [hashtable]$AuthReturnObject
+ 
     )
 
-    #Create new header variable so we can get rid of the hash table
-    $Header = $AuthReturnObject.Header  
-    $AuthenticationRawSession = $AuthReturnObject.Websession
-
-    $BodyOtp = @{'otp'= $Global:Config.'Credentials.otp'} | ConvertTo-Json
-
-    #reset the OTP token on disk
-    Set-VolvoAuthentication -ResetOtpToken
-
-    $AuthenticationRequestSendOtp = Invoke-WebRequest -Uri $AuthReturnObject.CheckOtpUrl -Method 'post' -Body $BodyOtp -WebSession $AuthenticationRawSession -Headers $Header
-    Write-LogEntry -Severity 2 -Message "OTP sent to server"
-   
-    #Clean up variables used with OTP data
-    Remove-Variable -Name 'BodyOtp'
-    Remove-Variable -Name 'AuthReturnObject'
-
-    $AuthenticationRequestSendOtpJson = $AuthenticationRequestSendOtp.Content | ConvertFrom-Json
-    $ContinueAuthenticationUrl = $AuthenticationRequestSendOtpJson._links.continueAuthentication.href + '?action=continueAuthentication'
-    
-    #Clean up variables used with OTP data
-    Remove-Variable -Name AuthenticationRequestSendOtp
-
-    Try{
-        #Not the best way to harvest the code but it will do for now as we need it encrypted
-        $AuthenticationAuthorizationCodeUnEncrypted = Invoke-WebRequest -Uri $ContinueAuthenticationUrl -Method 'get' -WebSession $AuthenticationRawSession -Headers $Header
-        $AuthenticationAuthorizationCodeEncrypted = ($AuthenticationAuthorizationCodeUnEncrypted.Content | ConvertFrom-Json).authorizeResponse.code | ConvertTo-SecureString -AsPlainText
-        Remove-variable -Name AuthenticationAuthorizationCodeUnEncrypted
-        Write-LogEntry -Severity 2 -Message "Completed Authentication"
-    }catch {
-        Write-LogEntry -Severity 1 -Message "Failed to securely harvest the authorization code"
-        Throw $_.Exception.Message
-    }
-    
     #Get Oauth
     Write-LogEntry -Severity 2 -Message "Preparing Oauth request"
 
-    $Header = Set-Header -CurrentHeader $Header -HeaderParameter @{'content-type' = 'application/x-www-form-urlencoded'}
+    #This should be the very first call to the service so we store it in a session variable for automatic handeling of the cookies
+    Write-LogEntry -Severity 2 -Message "Attempt to tradeding auth code for token on $($Global:Config.'Url.Oauth_Token')"
+    
+    Try {
+        #Using Curl seen ps invoke webrequest has issues and allways shows invalid code
 
-    $AuthenticationRequestOauth = Invoke-WebRequest `
-    -Uri $Global:Config.'Url.Oauth_Token' `
-    -Method 'post' `
-    -Body @{
-        'code' = $AuthenticationAuthorizationCodeEncrypted | ConvertFrom-SecureString -AsPlainText
-        'grant_type' = 'authorization_code'
-     } `
-    -WebSession $AuthenticationRawSession `
-    -Headers $Header
+        $TokenRequest = Invoke-WebRequest `
+        -Uri $Global:Config.'Url.Oauth_Token' `
+        -Method 'post' `
+        -Body @{
+            'grant_type' = 'authorization_code'
+            'code' = $Global:Config.'Credentials.OAuthCode' | ConvertFrom-SecureString -AsPlainText
+            'redirect_uri' = 'https://volvo4evcc.local/oauth/callback'
+            'code_verifier' = $Global:Config.'Credentials.Pkce'.CodeVerifier | ConvertFrom-SecureString -AsPlainText
+        } `
+        -Headers @{
+            'content-type' = 'application/x-www-form-urlencoded'
+            'authorization' = ('Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("$($Global:Config.'Credentials.ClientId' | ConvertFrom-SecureString -AsPlainText):$($Global:Config.'Credentials.ClientSecret' | ConvertFrom-SecureString -AsPlainText)"))))
+            'accept' = 'application/json'
+            'User-Agent' = "Volvo4evcc/2.0.0"
+        } 
 
-    $AuthenticationRequestOauthJson =  $AuthenticationRequestOauth.Content | ConvertFrom-Json
+    } catch {
+        Write-LogEntry -Severity 1 -Message "Failed to authenticate with Oauth token - $($_.Exception.Message)"
+        Throw $_.Exception.Message
+    }  
+
+
+    $AuthenticationRequestOauthJson =  $TokenRequest.Content | ConvertFrom-Json
 
     #store
     $Token = @{}
     $Token.AccessToken = $AuthenticationRequestOauthJson.access_token |ConvertTo-SecureString -AsPlainText
     $Token.RefreshToken = $AuthenticationRequestOauthJson.refresh_token |ConvertTo-SecureString -AsPlainText
-    $Token.ValidTimeToken = (Get-Date).AddSeconds( $AuthenticationRequestOauthJson.expires_in -120 )
+    $Token.ValidTimeToken = (Get-Date).AddSeconds( $AuthenticationRequestOauthJson.expires_in -35 )
     $Token.Source = 'Fresh'
-    #Dont need the session anymore
-    #$Token.Websession = $AuthenticationRawSession
 
+    #Export the token to disk
     $Token | Export-Clixml -Path './EncryptedOAuthToken.xml'
 
     #Remove variables used during oauth request 
+    Remove-Variable -Name TokenRequest
     Remove-Variable -Name AuthenticationRequestOauthJson
-    Remove-Variable -Name AuthenticationRequestOauth
 
     return $Token
 }
@@ -483,34 +464,43 @@ Function Watch-VolvoCar
         [hashtable]$Token
     )
 
+    #cleanup$CarData = Invoke-WebRequest `
+    #cleanup-Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
+    #cleanup-Method 'get' `
+    #cleanup-Headers @{
+    #cleanup    'vcc-api-key' = $Global:Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
+    #cleanup    'content-type' = 'application/json'
+    #cleanup    'accept' = '*/*'
+    #cleanup    'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
+    #cleanup}
+
     $CarData = Invoke-WebRequest `
-    -Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
+    -Uri ("https://api.volvocars.com/connected-vehicle/v2/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/fuel") `
     -Method 'get' `
     -Headers @{
         'vcc-api-key' = $Global:Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
-        'content-type' = 'application/json'
-        'accept' = '*/*'
+        'accept' = 'application/json'
         'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
     }
 
-    $CarDataJson = ($CarData.RawContent -split '(?:\r?\n){2,}')[1]
+    $CarDataJson = $CarData.Content | ConvertFrom-Json
     $Global:MyData.CarData = $CarDataJson
-    $CarDataJson = $global:MyData.CarData | ConvertFrom-Json
-    If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_DISCONNECTED'){
-
-        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
-
-    }elseif ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
-        If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
-
-        }else{ 
-            $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
-        }
-    }elseIf ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
-    
-        $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
-    }
+#   $CarDataJson = $global:MyData.CarData | ConvertFrom-Json
+#unsupported   If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_DISCONNECTED'){
+#unsupported
+#unsupported       $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
+#unsupported
+#unsupported   }elseif ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
+#unsupported       If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
+#unsupported           $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
+#unsupported
+#unsupported       }else{ 
+#unsupported           $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
+#unsupported       }
+#unsupported   }elseIf ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
+#unsupported   
+#unsupported       $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
+#unsupported   }
 
     If ($true -eq $Global:config.'Weather.Enabled'){
         $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
@@ -574,32 +564,33 @@ Function Get-NewVolvoToken
     
     )
 
-    $Header = Set-Header -HeaderParameter @{        
-        'content-type' = 'application/x-www-form-urlencoded'
-        'accept' = 'application/json'
-    }
-
-    $Header = Set-Header -CurrentHeader $Header -HeaderParameter (Get-Header)
-
     Try {
-        $NewTokenRaw = Invoke-WebRequest `
-        -Uri $Global:Config.'Url.Oauth_Token'`
+
+        #Using Curl seen ps invoke webrequest has issues and allways shows invalid code
+ 
+        $TokenRequest = Invoke-WebRequest `
+        -Uri $Global:Config.'Url.Oauth_Token' `
         -Method 'post' `
-        -Headers $Header `
         -Body @{
             'grant_type' = 'refresh_token'
-            'refresh_token' = $Token.RefreshToken | ConvertFrom-SecureString -AsPlainText     
+            'refresh_token' = $Token.RefreshToken | ConvertFrom-SecureString -AsPlainText
+            'redirect_uri' = 'https://volvo4evcc.local/oauth/callback'
+            'code_verifier' = $Global:Config.'Credentials.Pkce'.CodeVerifier | ConvertFrom-SecureString -AsPlainText
+        } `
+        -Headers @{
+            'content-type' = 'application/x-www-form-urlencoded'
+            'authorization' = ('Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("$($Global:Config.'Credentials.ClientId' | ConvertFrom-SecureString -AsPlainText):$($Global:Config.'Credentials.ClientSecret' | ConvertFrom-SecureString -AsPlainText)"))))
+            'accept' = 'application/json'
+            'User-Agent' = "Volvo4evcc/2.0.0"
         } 
 
-        $NewToken = $NewTokenRaw.Content | ConvertFrom-Json
+        $NewToken = $TokenRequest.Content | ConvertFrom-Json
 
         $TempToken = @{}
         $TempToken.AccessToken = $NewToken.access_token |ConvertTo-SecureString -AsPlainText
         $TempToken.RefreshToken = $NewToken.refresh_token |ConvertTo-SecureString -AsPlainText
-        $TempToken.ValidTimeToken = (Get-Date).AddSeconds( $NewToken.expires_in -120 )
+        $TempToken.ValidTimeToken = (Get-Date).AddSeconds( $NewToken.expires_in -35 )
         $TempToken.Source = 'Fresh'
-        #Dont need the session anymore
-        #$Token.Websession = $AuthenticationRawSession
 
         $TempToken | Export-Clixml -Path './EncryptedOAuthToken.xml'
 
@@ -610,6 +601,8 @@ Function Get-NewVolvoToken
         $Token.Source = 'Invalid-Expired'
         Return $Token
     }    
+    Remove-Variable -Name NewToken
+    Remove-Variable -Name TokenRequest
 
     Return $TempToken
 }
@@ -651,46 +644,52 @@ Function Confirm-VolvoAuthentication
         Return $OauthToken
     }
 
-    #Retest if expired needs full auth flow due to test issiue last time a
+    #Retest if expired needs full auth flow due to test issue last time
     If ($OauthToken.Source -eq 'Invalid' -or $OauthToken.Source -eq 'Invalid-Expired'){
         Write-LogEntry -Severity 2 -Message 'Token Cache issue need to refresh full token'
         Try{
             #Reset disk token to make sure its default
-            Set-VolvoAuthentication -ResetOtpToken
-            $OtpRequest = Initialize-VolvoAuthenticationOtpRequest
+            Set-VolvoAuthentication -ResetOAuthCode
+            Initialize-VolvoAuthenticationOauthUserConsent
         } Catch {
             Write-Error -Message "$($_.Exception.Message)"
-            Throw 'OTP Request failed'
+            Throw 'OOauth code Request failed'
         }
         
-        Write-LogEntry -Severity 0 -Message 'locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>"'
+        Write-LogEntry -Severity 0 -Message 'locate your email with the volvo token and run Set-VolvoAuthentication -OAuthCode "<OAuthCode>"'
 
         try{
-            $Count =1
+            $Count = 0
             Do {
-                
-                $Global:Config = Import-ConfigVariable -Reload
-                Write-LogEntry -Severity 0 -Message "Running wait for OTP loop $Count of 30"
                 $Count++
-                Write-LogEntry -Severity 2 -Message  "Current OTP value: $($Global:Config.'Credentials.Otp')"
-                Start-Sleep -Seconds 10
-            } Until ($Count -lt 30 -and $Global:Config.'Credentials.Otp' -ne '111111')
+                Write-LogEntry -Severity 0 -Message "Running wait for OAuthCode loop $Count of 30"
+                $Global:Config = Import-ConfigVariable -Reload
+                Write-LogEntry -Severity 2 -Message  "Current OAuthCode value: $($Global:Config.'Credentials.OAuthCode')"
+                Start-Sleep -Seconds 2
+            } Until ($Count -gt 30 -or $Global:Config.'Credentials.OAuthCode' -ne '111111')
         } Catch {
             Write-Error -Message "$($_.Exception.Message)"
-            Throw 'OTP was not loaded form disk'
+            Throw 'OAuthCode was not loaded form disk'
         }
 
-        If ($Global:Config.'Credentials.Otp' -eq '111111'){
-            Write-Error -Message 'No OTP token provided'
-            Throw 'No OTP token provided locate your email with the volvo token and run Set-VolvoAuthentication -OtpToken "<OTPcode>" '
+
+        If ($Global:Config.'Credentials.OAuthCode' -eq '111111'){
+            Write-Error -Message 'No OAuthCode token provided'
+            Throw 'No OAuthCode provided please login in the browser and cath the oauth code, then and run Set-VolvoAuthentication -OtpToken "OAuthCode" '
         }
-        #OTP has been picked up Reset OTP token on disk
+        
+        #Convert to secure string 
+        $Global:Config.'Credentials.OAuthCode' = $Global:Config.'Credentials.OAuthCode' | ConvertTo-SecureString -AsPlainText
+       
+        #OAuthCode has been picked up write current config to disk
+        Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
 
         Try{ 
-            $OauthToken = Initialize-VolvoAuthenticationTradeOtpForOauth -AuthReturnObject $OtpRequest
+            
+            $OauthToken = Initialize-VolvoAuthenticationTradeOAuthCodeForOauthToken
         } Catch {
             Write-Error -Message "$($_.Exception.Message)"
-            Throw 'Could not trade OTP for Oauth token'
+            Throw 'Could not get / trade OAuthCode for Oauth token'
         }
     } 
 
@@ -698,59 +697,59 @@ Function Confirm-VolvoAuthentication
 }
 
 
-Function Get-Fibonacci
-{
-<#
-	.SYNOPSIS
-		Calculate start header
-	
-	.DESCRIPTION
-		Calculate start header based on the Fibonacci sequence
-	
-	.EXAMPLE
-		Get-Header
-#>
+#cleanupFunction Get-Fibonacci
+#cleanup{
+#cleanup<#
+#cleanup	.SYNOPSIS
+#cleanup		Calculate start header
+#cleanup	
+#cleanup	.DESCRIPTION
+#cleanup		Calculate start header based on the Fibonacci sequence
+#cleanup	
+#cleanup	.EXAMPLE
+#cleanup		Get-Header
+#cleanup#>
+#cleanup
+#cleanup    [CmdletBinding()]
+#cleanup    Param (
+#cleanup        [int]$max
+#cleanup    )
+#cleanup 
+#cleanup    For($i = $j = 1; $i -lt $max)
+#cleanup    {
+#cleanup        $i  
+#cleanup        $i,$j = ($i + $j),$i
+#cleanup    }
+#cleanup}
 
-    [CmdletBinding()]
-    Param (
-        [int]$max
-    )
- 
-    For($i = $j = 1; $i -lt $max)
-    {
-        $i  
-        $i,$j = ($i + $j),$i
-    }
-}
-
-Function Get-Header
-{
-<#
-	.SYNOPSIS
-		Calculate start header
-	
-	.DESCRIPTION
-		Calculate start header based on the Fibonacci sequence
-	
-	.EXAMPLE
-		Get-Header
-#>
-
-    [CmdletBinding()]
-    Param ()
-
-    If ($PSVersionTable -like "Microsoft*"){
-      
-        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(64,31))"
-    }else {
-        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(64,31))"
-    }
-
-    $2 = @{"$([Char]97)$([Char]117)$([Char]116)$([Char]104)$([Char]111)$([Char]114)$([Char]105)$([Char]122)$([Char]97)$([Char]116)$([Char]105)$([Char]111)$([Char]110)" = "$([Char]98)$([Char]97)$([Char]115)$([Char]105)$([Char]99)$([Char]32)$(($1.ToCharArray() | Foreach-Object -Process {[byte][char]$_ +2 } | ForEach-Object -Process {[char]$_})  -join '')"}
-
-    return $2
-
-}
+#cleanupFunction Get-Header
+#cleanup{
+#cleanup<#
+#cleanup	.SYNOPSIS
+#cleanup		Calculate start header
+#cleanup	
+#cleanup	.DESCRIPTION
+#cleanup		Calculate start header based on the Fibonacci sequence
+#cleanup	
+#cleanup	.EXAMPLE
+#cleanup		Get-Header
+#cleanup#>
+#cleanup
+#cleanup    [CmdletBinding()]
+#cleanup    Param ()
+#cleanup
+#cleanup    If ($PSVersionTable -like "Microsoft*"){
+#cleanup      
+#cleanup        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(64,31))"
+#cleanup    }else {
+#cleanup        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(64,31))"
+#cleanup    }
+#cleanup
+#cleanup    $2 = @{"$([Char]97)$([Char]117)$([Char]116)$([Char]104)$([Char]111)$([Char]114)$([Char]105)$([Char]122)$([Char]97)$([Char]116)$([Char]105)$([Char]111)$([Char]110)" = "$([Char]98)$([Char]97)$([Char]115)$([Char]105)$([Char]99)$([Char]32)$(($1.ToCharArray() | Foreach-Object -Process {[byte][char]$_ +2 } | ForEach-Object -Process {[char]$_})  -join '')"}
+#cleanup
+#cleanup    return $2
+#cleanup
+#cleanup}
 
 
 Function Write-LogEntry
@@ -902,4 +901,99 @@ Function Update-SunHours
     $Global:Config.'Weather.SunHoursTotalAverage' = $TotalSunHours / 3
     $Global:Config.'Weather.SunHoursToday' = $SunHours.SunHours[0]
     
+}
+
+Function New-PKCE {
+    <#
+    .SYNOPSIS
+    Generate OAuth 2.0 Proof Key for Code Exchange (PKCE) 'code_challenge' and 'code_verifier' for use with an OAuth2 Authorization Code Grant flow 
+
+    .DESCRIPTION
+    Proof Key for Code Exchange (PKCE) is a mechanism, typically used together with an OAuth2 Authorization Code Grant flow to provide an enhanced level of security when authenticating to an Identity Provider (IDP) to get an access token.
+
+    .EXAMPLE 
+    Generate the code challenge for a specific code verifier
+    New-PKCE -codeVerifier 'yfQ3wNRAyimC2qFc0wXI04u6pb2vRWRfUGdbcILFYOxqC1iJ84dSU0uCsVsHoMuv4Mbu5kmQxd3sZspfnPotrIPx1A9DOVmY3ahcKTjJ5xoGz95A7J8zSw86HW5eZpE'
+
+    .EXAMPLE
+    Specify the length of the code verifier to generate
+    New-PKCE -length 99
+
+    #>
+
+    [cmdletbinding()]
+    param(
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
+        [int]$length = 43
+    )
+
+    $pkceTemplate = [pscustomobject][ordered]@{  
+        CodeVerifier  = $null  
+        CodeChallenge = $null   
+    }  
+        
+
+    # From the ASCII Table in Decimal A-Z a-z 0-9
+    $codeVerifier = -join (((48..57) * 4) + ((65..90) * 4) + ((97..122) * 4) | Get-Random -Count $length | ForEach-Object { [char]$_ })
+
+    $hashAlgo = [System.Security.Cryptography.HashAlgorithm]::Create('sha256')
+    $hash = $hashAlgo.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($codeVerifier))
+    $b64Hash = [System.Convert]::ToBase64String($hash)
+    $code_challenge = $b64Hash.Substring(0, 43)
+    
+    $code_challenge = $code_challenge.Replace("/","_")
+    $code_challenge = $code_challenge.Replace("+","-")
+    $code_challenge = $code_challenge.Replace("=","")
+
+    $pkceChallenges = $pkceTemplate.PsObject.Copy()
+    $pkceChallenges.CodeChallenge = $code_challenge | ConvertTo-SecureString -AsPlainText
+    $pkceChallenges.CodeVerifier = $codeVerifier | ConvertTo-SecureString -AsPlainText
+
+    return $pkceChallenges 
+    
+}
+
+
+Function Initialize-VolvoAuthenticationOauthUserConsent
+{
+<#
+	.SYNOPSIS
+		Start a new authentication setting validating full authentication
+	
+	.DESCRIPTION
+		Start a new authentication setting validating full authentication
+	
+	.EXAMPLE
+		Initialize-VolvoAuthenticationOauth
+#>
+
+    [CmdletBinding()]
+    Param (       	
+    )
+
+    #Test if we loaded config allready if not load now
+    $Global:Config = Import-ConfigVariable
+    
+    #Generate End user auth and accept URL
+
+    #Generate PKCE code challenge and verifier
+    $Global:Config.'Credentials.Pkce' = New-PKCE -length 43
+
+    #Store Pkce to disk
+    Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
+
+    $CodeChallengeUrlPart = '&code_challenge=' + ($Global:Config.'Credentials.Pkce'.CodeChallenge| ConvertFrom-SecureString -AsPlainText)  + '&code_challenge_method=S256'
+
+    $AuthUrl = $Global:Config.'Url.Oauth_Authorise' + '?redirect_uri=' + ($Global:Config.'Credentials.RedirectUri'| ConvertFrom-SecureString -AsPlainText) + '&scope=' + $Global:Config.'Url.Oauth_V2_scope'
+
+    $Fullurl = $AuthUrl + $CodeChallengeUrlPart + '&client_id=' + ($Global:Config.'Credentials.ClientId'| ConvertFrom-SecureString -AsPlainText) + '&response_type=code'
+
+    Write-LogEntry -Severity 0 -Message "Use a web browser and consent the API use and login at: (For security reasons url is not in log file)"
+    Write-Host -ForegroundColor Cyan -Object $Fullurl
+    Write-LogEntry -Severity 0 -Message "DO NOT CLOSE THE BROWSER YOU WILL NEED THE RETURN CODE FROM THE BROWSER TO CONTINUE"
+    
+    #clean up variables used in this function
+    Remove-Variable -name AuthUrl
+    Remove-Variable -name Fullurl
+    Remove-Variable -name CodeChallengeUrlPart
 }

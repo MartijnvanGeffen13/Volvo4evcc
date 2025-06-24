@@ -17,7 +17,7 @@ Function Set-VolvoAuthentication
     .EXAMPLE
         Set the OTP respons to the config
 
-        Set-VolvoAuthentication -OtpToken '123456'
+        Set-VolvoAuthentication -OAuthCode '123456'
 
 #>
 
@@ -27,11 +27,11 @@ Function Set-VolvoAuthentication
         
         [Parameter(Mandatory=$False,
         ParametersetName = 'Default')]
-        [String]$OtpToken,
+        [String]$OAuthCode,
 
         [Parameter(Mandatory=$False,
         ParametersetName = 'Reset')]
-        [switch]$ResetOtpToken,
+        [switch]$ResetOAuthCode,
 
         [Parameter(Mandatory=$true,
         ParametersetName = 'WeatherInfo')]
@@ -65,12 +65,12 @@ Function Set-VolvoAuthentication
         return
     }
 
-    If ($PSBoundParameters.ContainsKey('OtpToken')){
+    If ($PSBoundParameters.ContainsKey('OAuthCode')){
     
         #First reload current config before exporting again could be other default session that was started
         $Global:Config = Import-ConfigVariable -Reload
 
-        $Global:Config.'Credentials.Otp' = $OtpToken
+        $Global:Config.'Credentials.OAuthCode' = $OAuthCode
         Write-LogEntry -Severity 0 -Message "Otp token writen to config"
         
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
@@ -79,12 +79,12 @@ Function Set-VolvoAuthentication
         return
     }
     
-    if ($PSBoundParameters.ContainsKey('ResetOtpToken') ) {
+    if ($PSBoundParameters.ContainsKey('ResetOAuthCode') ) {
 
         $Global:Config = Import-ConfigVariable -Reload
 
-        $Global:Config.'Credentials.Otp' = '111111'
-        Write-LogEntry -Severity 2 -Message "Otp token Reset in config"
+        $Global:Config.'Credentials.OAuthCode' = '111111'
+        Write-LogEntry -Severity 2 -Message "OAuthCode Reset in config"
         
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
@@ -92,13 +92,16 @@ Function Set-VolvoAuthentication
         return
     }
 
-    $Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
-    $Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
+    $Global:Config.'Credentials.RedirectUri' = Read-Host -AsSecureString -Prompt 'RedirectUri'
+    $Global:Config.'Credentials.ClientId' = Read-Host -AsSecureString -Prompt 'ClientId'
+    $Global:Config.'Credentials.ClientSecret' = Read-Host -AsSecureString -Prompt 'ClientSecret'
     $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
+    #$Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
+    #$Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
     $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
     $Global:Config.'Url.Evcc' = Read-Host -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
     #Reset OTP on every export
-    $Global:Config.'Credentials.Otp' = '111111'
+    $Global:Config.'Credentials.OAuthCode' = '111111'
     
     Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
     Write-LogEntry -Severity 0 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
@@ -150,7 +153,7 @@ Function Start-Volvo4Evcc
         $RunCount++
 
         #Check token validity and get new one if near expiration
-        If ($Token.ValidTimeToken.AddSeconds(-120) -lt (Get-date)){
+        If ($Token.ValidTimeToken.AddSeconds(-35) -lt (Get-date)){
             $Token.Source = 'Invalid-Expired'
             Write-LogEntry -Severity 0 -Message 'Token is expired trying to get new one'
             $TokenTemp = $Token
