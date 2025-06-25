@@ -2,19 +2,18 @@
 
 <h3>If you like this project please sponsor me via https://buymeacoffee.com/scriptkiddie</h3>
 
-This addon for EVCC will provide the interface between the volvo API and EVCC. It supports the New modern client OAuth flow and does not need a MQTT broker. This module is build as a dedicated EVCC module in contrast tot other addons (That are native to Home assistend). This addon is build to improve on the issues Volvo2MQTT or other HA based addons have. As a bonus we have added Weather functionality to controle SOC minimum charge state on 3 day weater forecast and greatly enhanced security. 
+This addon for EVCC will provide the interface between the volvo API and EVCC. It supports the New modern client OAuth flow and Energy V2 API of volvo. It does not need a MQTT broker. This module is build as a dedicated EVCC module in contrast tot other addons (That are native to Home assistend). This addon is build to improve on the issues other HA based addons have. As a bonus we have added Weather functionality to controle SOC minimum charge state on 3 day weater forecast and greatly enhanced security. 
 
 
-Currently we are in Release state of Version 2.0Alpha. this versions seems to run stable , documentation is in the wiki. 
+Currently we are in Release state of Version 2.1.1 this versions seems to run stable , documentation is updated in the wiki. (Please read if you migrate from pre 2.0)
 
 <h3>Current State:</h3>
 
-- V2.0 Release
+- V2.1.1 Release
 - Complete redesign of OAuth no longer relaying on OTP but true Oauth client flow as per VOLVO documentation. (No more faking the client)
 - Move to V2 API now that V1 is depricated
 
-- Issues: currently EX30 does not seem to expose enery API or atleast not the state part , meaning we can only pull SOC state and not if car is connected. (Contacted volvo as this is documented as supported for EX30 , unknown for others)
-
+- Issues: no support for multi car , you need 2 instances of the addon 
 ----
 
 - V1.5 released in the main branch and running stable in production now for over 10 days (Linux host)
