@@ -338,31 +338,62 @@ Function Start-RestBrokerService
     }Else{
         $global:MyData.CarData = @"
 {
-    "status": 200,
-    "data": {
-        "estimatedChargingTime": {
-            "value": "0",
-            "unit": "minutes"
-        },
-        "batteryChargeLevel": {
-            "value": "0",
-            "unit": "percentage"
-        },
-        "electricRange": {
-            "value": "0",
-            "unit": "kilometers"
-        },
-        "chargingSystemStatus": {
-            "value": "Startup"
-        },
-        "chargingConnectionStatus": {
-            "value": "Startup"
-        }
-        "EvccStatus": {
-            "value": "A"
-        }
-    },
-    "operationId": "Startup"
+  "batteryChargeLevel": {
+    "status": "OK",
+    "value": 0.0,
+    "unit": "percentage",
+    "updatedAt": "Startup"
+  },
+  "electricRange": {
+    "status": "OK",
+    "value": 0,
+    "unit": "km",
+    "updatedAt": "Startup"
+  },
+  "chargerConnectionStatus": {
+    "status": "OK",
+    "value": "DISCONNECTED",
+    "updatedAt": "Startup"
+  },
+  "chargingStatus": {
+    "status": "OK",
+    "value": "IDLE",
+    "updatedAt": "Startup"
+  },
+  "chargingType": {
+    "status": "OK",
+    "value": "NONE",
+    "updatedAt": "Startup"
+  },
+  "chargerPowerStatus": {
+    "status": "OK",
+    "value": "NO_POWER_AVAILABLE",
+    "updatedAt": "Startup"
+  },
+  "estimatedChargingTimeToTargetBatteryChargeLevel": {
+    "status": "OK",
+    "value": 0,
+    "unit": "minutes",
+    "updatedAt": "Startup"
+  },
+  "chargingCurrentLimit": {
+    "status": "ERROR",
+    "code": "NOT_SUPPORTED",
+    "message": "Resource is not supported for this vehicle"
+  },
+  "targetBatteryChargeLevel": {
+    "status": "ERROR",
+    "code": "ERROR_READING_PROPERTY",
+    "message": "Failed to get target battery charge level"
+  },
+  "chargingPower": {
+    "status": "ERROR",
+    "code": "NOT_SUPPORTED",
+    "message": "Resource is not supported for this vehicle"
+  },
+  "EvccStatus": {
+    "value": "A"
+  }
 }
 "@
     }
@@ -464,18 +495,8 @@ Function Watch-VolvoCar
         [hashtable]$Token
     )
 
-    #cleanup$CarData = Invoke-WebRequest `
-    #cleanup-Uri ("https://api.volvocars.com/energy/v1/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/recharge-status") `
-    #cleanup-Method 'get' `
-    #cleanup-Headers @{
-    #cleanup    'vcc-api-key' = $Global:Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
-    #cleanup    'content-type' = 'application/json'
-    #cleanup    'accept' = '*/*'
-    #cleanup    'authorization' = ('Bearer ' + ($Token.AccessToken | ConvertFrom-SecureString -AsPlainText))
-    #cleanup}
-
     $CarData = Invoke-WebRequest `
-    -Uri ("https://api.volvocars.com/connected-vehicle/v2/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/fuel") `
+    -Uri ("https://api.volvocars.com/energy/v2/vehicles/$($Global:Config.'Car.Vin' | ConvertFrom-SecureString -AsPlainText)/state") `
     -Method 'get' `
     -Headers @{
         'vcc-api-key' = $Global:Config.'Credentials.VccApiKey' | ConvertFrom-SecureString -AsPlainText
@@ -486,25 +507,25 @@ Function Watch-VolvoCar
     $CarDataJson = $CarData.Content | ConvertFrom-Json
     $Global:MyData.CarData = $CarDataJson
 #   $CarDataJson = $global:MyData.CarData | ConvertFrom-Json
-#unsupported   If ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_DISCONNECTED'){
-#unsupported
-#unsupported       $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
-#unsupported
-#unsupported   }elseif ($CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_AC' -or $CarDataJson.Data.ChargingConnectionStatus.Value -eq 'CONNECTION_STATUS_CONNECTED_DC'){
-#unsupported       If ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_CHARGING'){
-#unsupported           $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
-#unsupported
-#unsupported       }else{ 
-#unsupported           $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
-#unsupported       }
-#unsupported   }elseIf ($CarDataJson.Data.ChargingSystemStatus.Value -eq 'CHARGING_SYSTEM_IDLE'){
-#unsupported   
-#unsupported       $CarDataJson.data| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
-#unsupported   }
+    If ($CarDataJson.chargerConnectionStatus.Value -eq 'DISCONNECTED'){
+ 
+        $CarDataJson | add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='A'})  -MemberType NoteProperty
+ 
+    }elseif ($CarDataJson.chargerConnectionStatus.Value -eq 'CONNECTED'){
+        If ($CarDataJson.chargingStatus.Value -eq 'CHARGING'){
+            $CarDataJson| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='C'})  -MemberType NoteProperty
+ 
+        }else{ 
+            $CarDataJson| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
+        }
+    }elseIf ($CarDataJson.chargerConnectionStatus.Value -eq 'FAULT'){
+    
+        $CarDataJson| add-member -Name "EvccStatus" -value ([PSCustomObject]@{'value'='B'})  -MemberType NoteProperty
+    }
 
     If ($true -eq $Global:config.'Weather.Enabled'){
-        $CarDataJson.data| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
-        $CarDataJson.data| add-member -Name "SunHoursToday" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursToday')"})  -MemberType NoteProperty
+        $CarDataJson| add-member -Name "SunHoursTotalAverage" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursTotalAverage')"})  -MemberType NoteProperty
+        $CarDataJson| add-member -Name "SunHoursToday" -value ([PSCustomObject]@{'value'= "$($Global:Config.'Weather.SunHoursToday')"})  -MemberType NoteProperty
     }
    
     $Global:MyData.CarData = $CarDataJson | ConvertTo-Json
