@@ -15,7 +15,7 @@ Function Set-VolvoAuthentication
 		Set-VolvoAuthentication
 
     .EXAMPLE
-        Set the OTP respons to the config
+        Set the Oauth response to the config
 
         Set-VolvoAuthentication -OAuthCode '123456'
 
@@ -71,7 +71,7 @@ Function Set-VolvoAuthentication
         $Global:Config = Import-ConfigVariable -Reload
 
         $Global:Config.'Credentials.OAuthCode' = $OAuthCode
-        Write-LogEntry -Severity 0 -Message "Otp token writen to config"
+        Write-LogEntry -Severity 0 -Message "OAuth token writen to config"
         
         Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"
         Write-LogEntry -Severity 2 -Message "Exporting config to $((Get-Location).path)\volvo4evccconfig.xml"
@@ -96,11 +96,9 @@ Function Set-VolvoAuthentication
     $Global:Config.'Credentials.ClientId' = Read-Host -AsSecureString -Prompt 'ClientId'
     $Global:Config.'Credentials.ClientSecret' = Read-Host -AsSecureString -Prompt 'ClientSecret'
     $Global:Config.'Credentials.VccApiKey' = Read-Host -AsSecureString -Prompt 'VccApiKey'
-    #$Global:Config.'Credentials.Username' = Read-Host -AsSecureString -Prompt 'Username'
-    #$Global:Config.'Credentials.Password' = Read-Host -AsSecureString -Prompt 'Password'
     $Global:Config.'Car.Vin' = Read-Host -AsSecureString -Prompt 'VIN'
     $Global:Config.'Url.Evcc' = Read-Host -Prompt 'EVCC URL eg: http://192.168.178.201:7070'
-    #Reset OTP on every export
+    #Reset Oauthcode on every export
     $Global:Config.'Credentials.OAuthCode' = '111111'
     
     Export-Clixml -InputObject $Global:Config -Path "$((Get-Location).path)\volvo4evccconfig.xml"

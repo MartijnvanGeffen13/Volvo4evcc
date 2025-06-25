@@ -38,83 +38,6 @@ Function Load-TokenFromDisk
     return $Token
 }
 
-#cleanupFunction Initialize-VolvoAuthenticationOtpRequest
-#cleanup{
-#cleanup<#
-#cleanup	.SYNOPSIS
-#cleanup		Start a new authentication setting validating full authentication
-#cleanup	
-#cleanup	.DESCRIPTION
-#cleanup		Start a new authentication setting validating full authentication
-#cleanup	
-#cleanup	.EXAMPLE
-#cleanup		Initialize-VolvoAuthentication
-#cleanup#>
-#cleanup
-#cleanup    [CmdletBinding()]
-#cleanup    Param (       	
-#cleanup    )
-#cleanup
-#cleanup    #Test if we loaded config allready if not load now
-#cleanup    $Global:Config = Import-ConfigVariable
-#cleanup    
-#cleanup
-#cleanup    $StartHeader = @{
-#cleanup
-#cleanup        'User-Agent' = "vca-android/5.47.0"
-#cleanup        'Accept-Encoding' = 'gzip'
-#cleanup        'content-type'= 'application/json; charset=utf-8'
-#cleanup    }
-#cleanup
-#cleanup    $HeaderStart = Set-Header -HeaderParameter $StartHeader
-#cleanup    $Header = Set-Header -CurrentHeader $HeaderStart -HeaderParameter (Get-Header)
-#cleanup
-#cleanup    #This should be the very first call to the service so we store it in a session variable for automatic handeling of the cookies
-#cleanup    Write-LogEntry -Severity 2 -Message "Initiate first web auth with claims to $(($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims'))"
-#cleanup    
-#cleanup    Try{
-#cleanup        $AuthenticationFirstRequestRaw = Invoke-WebRequest -Uri ($Global:Config.'Url.Oauth_Authorise'+$Global:Config.'Url.Oauth_Claims') -Headers $Header -Method 'get' -SessionVariable AuthenticationRawSession
-#cleanup    }catch {
-#cleanup        Write-LogEntry -Severity 1 -Message "Failed to Authenticate - $($_.Exception.Message)"
-#cleanup        Throw $_.Exception.Message
-#cleanup    }
-#cleanup    $AuthenticationFirstRequestJson = $AuthenticationFirstRequestRaw.Content | ConvertFrom-Json
-#cleanup    
-#cleanup    #Add required header for CheckUsernamePassword
-#cleanup    $Header = Set-Header -CurrentHeader $Header -HeaderParameter @{'x-xsrf-header'='PingFederate'}
-#cleanup
-#cleanup    $CheckUsernamePasswordUrl = $AuthenticationFirstRequestJson._links.checkUsernamePassword.href + '?action=checkUsernamePassword'
-#cleanup
-#cleanup    #Purge Auth variable data from memory
-#cleanup    Remove-Variable -Name AuthenticationFirstRequestJson
-#cleanup    Remove-Variable -Name AuthenticationFirstRequestRaw
-#cleanup
-#cleanup    #Query URL without exposing a cred as variable
-#cleanup    Write-LogEntry -Severity 2 -Message "Initiate authentication with username and password to get OTP emailed"
-#cleanup    $AuthenticationOtpReceived = Invoke-WebRequest `
-#cleanup    -Uri $CheckUsernamePasswordUrl `
-#cleanup    -Method 'post' `
-#cleanup    -Body (@{
-#cleanup        'username' = $Global:Config.'Credentials.Username' | ConvertFrom-SecureString -AsPlainText
-#cleanup        'password' = $Global:Config.'Credentials.Password' | ConvertFrom-SecureString -AsPlainText
-#cleanup    } | ConvertTo-Json) `
-#cleanup    -WebSession $AuthenticationRawSession `
-#cleanup    -Headers $Header
-#cleanup
-#cleanup    $AuthenticationOtpReceivedJson = $AuthenticationOtpReceived.content | ConvertFrom-Json
-#cleanup
-#cleanup    $AuthReturnObject = @{
-#cleanup
-#cleanup        'CheckOtpUrl' =  $AuthenticationOtpReceivedJson._links.checkOtp.href + '?action=checkOtp'
-#cleanup        'Websession' = $AuthenticationRawSession
-#cleanup        'Header' = $Header
-#cleanup
-#cleanup    }
-#cleanup
-#cleanup    Return $AuthReturnObject
-#cleanup}
-
-
 Function Set-Header
 {
 <#
@@ -160,31 +83,6 @@ Function Set-Header
     return $NewHeader
 
 }
-
-#cleanupFunction Wait-UserOtpInput
-#cleanup{
-#cleanup<#
-#cleanup	.SYNOPSIS
-#cleanup		While the system has generated a OTP request we now need the user to provide it 
-#cleanup        We will wait and attempt to harver the token for 5 minutes
-#cleanup	
-#cleanup	.DESCRIPTION
-#cleanup		While the system has generated a OTP request we now need the user to provide it 
-#cleanup        We will wait and attempt to harver the token for 5 minutes
-#cleanup	
-#cleanup	.EXAMPLE
-#cleanup		Wait-UserOtpInput
-#cleanup#>
-#cleanup
-#cleanup    [CmdletBinding()]
-#cleanup    Param (       	
-#cleanup    )
-#cleanup
-#cleanup    $Otp = Read-Host -AsSecureString -Prompt 'Please provide the OTP code sent to your email'
-#cleanup
-#cleanup    return $Otp
-#cleanup}
-
 
 Function Import-ConfigVariable
 {
@@ -246,13 +144,13 @@ Function Initialize-VolvoAuthenticationTradeOAuthCodeForOauthToken
 {
 <#
 	.SYNOPSIS
-		This will take the web session from the OTP, and the OTP URL as input and will trade the OTP for a Oauth token
+		This will take the web session from the OAuthcode, and the OAuthcode URL as input and will trade the OAuthcode for a Oauth token
 	
 	.DESCRIPTION
-		Trade OTP for Oauth token
+		Trade OAuthcode for Oauth token
 
 	.EXAMPLE
-		Initialize-VolvoAuthenticationTradeOtpForOauth 
+		Initialize-VolvoAuthenticationTradeOAuthCodeForOauthToken
 #>
     [CmdletBinding()]
     Param (
@@ -677,7 +575,7 @@ Function Confirm-VolvoAuthentication
             Throw 'OOauth code Request failed'
         }
         
-        Write-LogEntry -Severity 0 -Message 'locate your email with the volvo token and run Set-VolvoAuthentication -OAuthCode "<OAuthCode>"'
+        Write-LogEntry -Severity 0 -Message 'login to the browser and catch the oauth code. Update the xml or run Set-VolvoAuthentication -OAuthCode "<OAuthCode>"'
 
         try{
             $Count = 0
@@ -696,7 +594,7 @@ Function Confirm-VolvoAuthentication
 
         If ($Global:Config.'Credentials.OAuthCode' -eq '111111'){
             Write-Error -Message 'No OAuthCode token provided'
-            Throw 'No OAuthCode provided please login in the browser and cath the oauth code, then and run Set-VolvoAuthentication -OtpToken "OAuthCode" '
+            Throw 'No OAuthCode provided please login in the browser and catch the oauth code, then and run Set-VolvoAuthentication -OAuthCode "<OAuthCode>" '
         }
         
         #Convert to secure string 
@@ -716,62 +614,6 @@ Function Confirm-VolvoAuthentication
 
     Return $OauthToken
 }
-
-
-#cleanupFunction Get-Fibonacci
-#cleanup{
-#cleanup<#
-#cleanup	.SYNOPSIS
-#cleanup		Calculate start header
-#cleanup	
-#cleanup	.DESCRIPTION
-#cleanup		Calculate start header based on the Fibonacci sequence
-#cleanup	
-#cleanup	.EXAMPLE
-#cleanup		Get-Header
-#cleanup#>
-#cleanup
-#cleanup    [CmdletBinding()]
-#cleanup    Param (
-#cleanup        [int]$max
-#cleanup    )
-#cleanup 
-#cleanup    For($i = $j = 1; $i -lt $max)
-#cleanup    {
-#cleanup        $i  
-#cleanup        $i,$j = ($i + $j),$i
-#cleanup    }
-#cleanup}
-
-#cleanupFunction Get-Header
-#cleanup{
-#cleanup<#
-#cleanup	.SYNOPSIS
-#cleanup		Calculate start header
-#cleanup	
-#cleanup	.DESCRIPTION
-#cleanup		Calculate start header based on the Fibonacci sequence
-#cleanup	
-#cleanup	.EXAMPLE
-#cleanup		Get-Header
-#cleanup#>
-#cleanup
-#cleanup    [CmdletBinding()]
-#cleanup    Param ()
-#cleanup
-#cleanup    If ($PSVersionTable -like "Microsoft*"){
-#cleanup      
-#cleanup        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-DnsName -Type txt -Name "$($_).13thdivision.nl"}).strings -join '').substring(64,31))"
-#cleanup    }else {
-#cleanup        $1 = "$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(0,64))``$(((Get-Fibonacci -max 2600 | ForEach-Object -Process { Resolve-Dns -querytype 'txt' -query "$($_).13thdivision.nl"}).Answers.text -join '').substring(64,31))"
-#cleanup    }
-#cleanup
-#cleanup    $2 = @{"$([Char]97)$([Char]117)$([Char]116)$([Char]104)$([Char]111)$([Char]114)$([Char]105)$([Char]122)$([Char]97)$([Char]116)$([Char]105)$([Char]111)$([Char]110)" = "$([Char]98)$([Char]97)$([Char]115)$([Char]105)$([Char]99)$([Char]32)$(($1.ToCharArray() | Foreach-Object -Process {[byte][char]$_ +2 } | ForEach-Object -Process {[char]$_})  -join '')"}
-#cleanup
-#cleanup    return $2
-#cleanup
-#cleanup}
-
 
 Function Write-LogEntry
 {
