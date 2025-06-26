@@ -166,6 +166,22 @@ Function Initialize-VolvoAuthenticationTradeOAuthCodeForOauthToken
     Try {
         #Using Curl seen ps invoke webrequest has issues and allways shows invalid code
 
+        Write-LogEntry -Severity 2 -Message @"
+
+
+        Invoke-WebRequest -Uri $($Global:Config.'Url.Oauth_Token') -Method 'post' -Body @{
+            'grant_type' = 'authorization_code'
+            'code' = "$($Global:Config.'Credentials.OAuthCode' | ConvertFrom-SecureString -AsPlainText)"
+            'redirect_uri' = 'https://volvo4evcc.local/oauth/callback'
+            'code_verifier' = "$($Global:Config.'Credentials.Pkce'.CodeVerifier | ConvertFrom-SecureString -AsPlainText)"   
+        } -Headers @{
+            'content-type' = 'application/x-www-form-urlencoded'
+            'authorization' = ('Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("$($Global:Config.'Credentials.ClientId' | ConvertFrom-SecureString -AsPlainText):$($Global:Config.'Credentials.ClientSecret' | ConvertFrom-SecureString -AsPlainText)"))))
+            'accept' = 'application/json'
+            'User-Agent' = "Volvo4evcc/2.0.0"
+        } 
+"@ 
+
         $TokenRequest = Invoke-WebRequest `
         -Uri $Global:Config.'Url.Oauth_Token' `
         -Method 'post' `
@@ -184,6 +200,11 @@ Function Initialize-VolvoAuthenticationTradeOAuthCodeForOauthToken
 
     } catch {
         Write-LogEntry -Severity 1 -Message "Failed to authenticate with Oauth token - $($_.Exception.Message)"
+        Write-LogEntry -Severity 2 -Message $_.Exception.Response.RequestMessage.content
+        Write-LogEntry -Severity 2 -Message $_.Exception.Response.RequestMessage.RequestUri 
+        Write-LogEntry -Severity 2 -Message $_.Exception.Response.RequestMessage.Headers
+        Write-LogEntry -Severity 2 -Message $_.Exception.Response.RequestMessage.requestmessage
+        
         Throw $_.Exception.Message
     }  
 
