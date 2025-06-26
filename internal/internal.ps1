@@ -176,7 +176,7 @@ Function Initialize-VolvoAuthenticationTradeOAuthCodeForOauthToken
             'code_verifier' = "$($Global:Config.'Credentials.Pkce'.CodeVerifier | ConvertFrom-SecureString -AsPlainText)"   
         } -Headers @{
             'content-type' = 'application/x-www-form-urlencoded'
-            'authorization' = $('Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("$($Global:Config.'Credentials.ClientId' | ConvertFrom-SecureString -AsPlainText):$($Global:Config.'Credentials.ClientSecret' | ConvertFrom-SecureString -AsPlainText)"))))
+            'authorization' = "$('Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("$($Global:Config.'Credentials.ClientId' | ConvertFrom-SecureString -AsPlainText):$($Global:Config.'Credentials.ClientSecret' | ConvertFrom-SecureString -AsPlainText)"))))"
             'accept' = 'application/json'
             'User-Agent' = "Volvo4evcc/2.0.0"
         } 
