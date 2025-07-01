@@ -46,6 +46,9 @@ Currently we are in Release state of Version 1.8.1 for the single car support.  
 - Weather forecast support to auto set the MINSOC charging value based on solar hours for the next 3 days so you dont have to update your plan manual. It will increase when low sun and decrease when sun forcasting is good. Always keeps a buffer for unforcasted sun. 
 
 
+<h3>If you like this project please sponsor me via https://buymeacoffee.com/scriptkiddie</h3>
+
+
 <h2>Wiki Items</h2>
 Instalation prerequisits:
 https://github.com/MartijnvanGeffen13/Volvo4evcc/wiki/0-Installation-Prerequisites
