@@ -457,9 +457,13 @@ Function Get-EvccData
         $EvccData.SourceOk = $False
     }
 
-    $EvccData.Connected = $EvccDataRaw.result.loadpoints.connected
-    $EvccData.Charging = $EvccDataRaw.result.loadpoints.charging
-
+    if($EvccDataRaw.result){
+        $EvccData.Connected = $EvccDataRaw.result.loadpoints.connected
+        $EvccData.Charging = $EvccDataRaw.result.loadpoints.charging
+    }else{
+        $EvccData.Connected = $EvccDataRaw.loadpoints.connected
+        $EvccData.Charging = $EvccDataRaw.loadpoints.charging
+    }
     return $EvccData
 }
 
@@ -515,8 +519,8 @@ Function Get-NewVolvoToken
 
     } Catch {
     
-        Write-LogEntry -Severity 1 -Message $ErrorMessage.ErrorDetails.Message
         $ErrorMessage = $_
+        Write-LogEntry -Severity 1 -Message $ErrorMessage.ErrorDetails.Message
         $Token.Source = 'Invalid-Expired'
         Return $Token
     }    
@@ -565,6 +569,16 @@ Function Confirm-VolvoAuthentication
 
     #Retest if expired needs full auth flow due to test issue last time
     If ($OauthToken.Source -eq 'Invalid' -or $OauthToken.Source -eq 'Invalid-Expired'){
+	if ($OauthToken.Source -eq 'Invalid-Expired'){
+        if ($Global:Config.'Credentials.OAuthCode' -ne '111111'){
+            
+            $Token = Test-TokenValidity -Token $OauthToken
+            if ($Token){
+                return $Token
+            }
+        }
+	}
+
         Write-LogEntry -Severity 2 -Message 'Token Cache issue need to refresh full token'
         Try{
             #Reset disk token to make sure its default
@@ -581,11 +595,11 @@ Function Confirm-VolvoAuthentication
             $Count = 0
             Do {
                 $Count++
-                Write-LogEntry -Severity 0 -Message "Running wait for OAuthCode loop $Count of 30"
+                Write-LogEntry -Severity 0 -Message "Running wait for OAuthCode loop $Count of 40"
                 $Global:Config = Import-ConfigVariable -Reload
                 Write-LogEntry -Severity 2 -Message  "Current OAuthCode value: $($Global:Config.'Credentials.OAuthCode')"
                 Start-Sleep -Seconds 2
-            } Until ($Count -gt 30 -or $Global:Config.'Credentials.OAuthCode' -ne '111111')
+            } Until ($Count -gt 40 -or $Global:Config.'Credentials.OAuthCode' -ne '111111')
         } Catch {
             Write-Error -Message "$($_.Exception.Message)"
             Throw 'OAuthCode was not loaded form disk'
@@ -638,6 +652,10 @@ Function Write-LogEntry
     [Int32]$Severity=0
     )
     
+
+    if ([string]::Empty -eq $Message ){
+        $Message = 'No message provided'
+    }
 
     #Information
     If ($Severity -eq 0){
@@ -721,7 +739,11 @@ Function Update-SunHours
     $Sunhours = Get-Sunhours
 
     $Evcc = Invoke-RestMethod -Uri "$($Global:Config.'Url.Evcc')/api/state" -Method get
-    $TargetVehicle = $evcc.result.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
+    if ($Evcc.result){
+        $TargetVehicle = $Evcc.result.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
+    }else{
+        $TargetVehicle = $Evcc.vehicles | Get-Member |  Where-Object -FilterScript {$_.Membertype -eq "NoteProperty" }
+    }
 
     if($SunHours){
         $SunHours.SunHours[0..($Global:Config.'Weather.SunHoursDaysDevider'-1)] | ForEach-Object -Begin {$TotalSunHours = 0} -Process {$TotalSunHours += $_}
