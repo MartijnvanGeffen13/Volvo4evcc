@@ -150,79 +150,42 @@ Function Start-Volvo4Evcc
         #Increase run count
         $RunCount++
 
-        #Check token validity and get new one if near expiration
-        If ($Token.ValidTimeToken.AddSeconds(-35) -lt (Get-date)){
-            $Token.Source = 'Invalid-Expired'
-            Write-LogEntry -Severity 0 -Message 'Token is expired trying to get new one'
-            $TokenTemp = $Token
-            $Token = $null
-            Try{
-                $Token = Get-NewVolvoToken -Token $TokenTemp
-                Write-LogEntry -Severity 2 -Message 'Token is refreshed succesfully'
-            } Catch {
-                If ($_.Exception.Message){
-                    Write-LogEntry -Severity 1 -Message "$($_.Exception.Message)"
-                }else{
-                    Write-LogEntry -Severity 1 -Message "$($_.Exception)"
-                }
-                $counter = 1
-                Do {
-                    $counter++
-                    Try{
-                        $Token = Get-NewVolvoToken -Token $TokenTemp
-                        Write-LogEntry -Severity 2 -Message "Token is refreshed succesfully on attempt : $counter"
-                    } Catch {
-                        If ($_.Exception.Message){
-                            Write-LogEntry -Severity 1 -Message "$($_.Exception.Message)"
-                        }else{
-                            Write-LogEntry -Severity 1 -Message "$($_.Exception)"
-                        }        
-                    }
-                    Start-Sleep -Seconds 5
-                }while ($null -eq $Token -or $Counter -gt 4) 
 
-                If ($Null -eq $Token){
-                    Throw 'Could not get new token please restart with full auth and 2FA'
-                }
-                
-            }finally{
-                #Remove temp token
-                $TokenTemp = $null
-            }
-
-        }
         #Get EvccData
         #If multiple loadpoints Array returns all loadpoints. Testing for true means if any is true it will run.
         $EvccData = Get-EvccData
         $MessageDone = $False
 
         If ($True -eq $EvccData.SourceOk){
-            #Get Volvo data 2 times slower than every poll
-            If ($true -eq $EvccData.Connected -and $true -eq $EvccData.Charging -and ($RunCount%8) -eq 0){
+            #Get Volvo data 12 times slower than every poll - 3 minutes
+            If ($true -eq $EvccData.Connected -and $true -eq $EvccData.Charging -and ($RunCount%12) -eq 0){
             
                 Write-LogEntry -Severity 0 -Message 'Connected - charging - Fast refresh of volvo SOC data'
                 $MessageDone = $True
+                $Token = Test-TokenValidity -Token $Token
                 Watch-VolvoCar -Token $Token
             }
-            #Get Volvo data 5 times slower than every poll
-            If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%20) -eq 0){
+            #Get Volvo data 56 times slower than every poll - 14 min
+            If ($true -eq $EvccData.Connected -and $false -eq $EvccData.Charging  -and ($RunCount%56) -eq 0){
                 #Also cycle web service
                 Write-LogEntry -Severity 0 -Message 'Connected - Not charging - Slow refresh of volvo SOC data'
                 $MessageDone = $True
+                $Token = Test-TokenValidity -Token $Token
                 Watch-VolvoCar -Token $Token
             }
 
-            #Get weather forecast and set MinSOC if needed
+            #Get weather forecast and set MinSOC if needed every hour
             If ($true -eq $Global:Config.'Weather.Enabled' -and ($RunCount%240) -eq 0){
                 Update-SunHours
             }
 
 
-            #Get Volvo data 5 times slower than every poll
-            If ($false -eq $EvccData.Connected -and ($RunCount%240) -eq 0){
+            #Get Volvo data 240 times slower than every poll - 2 Hour
+            If ($false -eq $EvccData.Connected -and ($RunCount%480) -eq 0){
 
-                Write-LogEntry -Severity 0 -Message 'Not Connected - Super Slow Refresh of volvo SOC data - once every hour'
+                Write-LogEntry -Severity 0 -Message 'Not Connected - Super Slow Refresh of volvo SOC data - once every 2 hour'
                 $MessageDone = $True
+                $Token = Test-TokenValidity -Token $Token
                 Watch-VolvoCar -Token $Token
 
             }
@@ -235,6 +198,7 @@ Function Start-Volvo4Evcc
                 }
                 Write-LogEntry -Severity 0 -Message "Startup with Connected:$($EvccData.Connected) - Charging:$($EvccData.Charging)"
                 $MessageDone = $True
+                $Token = Test-TokenValidity -Token $Token
                 Watch-VolvoCar -Token $Token
             }
 
@@ -245,6 +209,7 @@ Function Start-Volvo4Evcc
                     #If there is a differance in connection state do a emergency update without waiting for pull
                     Write-LogEntry -Severity 0 -Message "Emergency Push due to connection dif was:$LastPulseEvccData - now is:$($EvccData.Connected)"
                     $MessageDone = $True
+                    $Token = Test-TokenValidity -Token $Token
                     Watch-VolvoCar -Token $Token
                 }
             }
@@ -267,3 +232,56 @@ Function Start-Volvo4Evcc
     }while ($True) 
 
 } 
+
+Function Test-TokenValidity
+{
+
+    [CmdletBinding()]
+    Param (
+        $Token
+    )
+
+    #Check token validity and get new one if near expiration
+    If ($Token.ValidTimeToken.AddSeconds(-35) -lt (Get-date)){
+        $Token.Source = 'Invalid-Expired'
+        Write-LogEntry -Severity 0 -Message 'Token is expired trying to get new one'
+        $TokenTemp = $Token
+        $Token = $null
+        Try{
+            $Token = Get-NewVolvoToken -Token $TokenTemp
+            Write-LogEntry -Severity 2 -Message 'Token is refreshed succesfully'
+        } Catch {
+            If ($_.Exception.Message){
+                Write-LogEntry -Severity 1 -Message "$($_.Exception.Message)"
+            }else{
+                Write-LogEntry -Severity 1 -Message "$($_.Exception)"
+            }
+            $counter = 1
+            Do {
+                $counter++
+                Try{
+                    $Token = Get-NewVolvoToken -Token $TokenTemp
+                    Write-LogEntry -Severity 2 -Message "Token is refreshed succesfully on attempt : $counter"
+                } Catch {
+                    If ($_.Exception.Message){
+                        Write-LogEntry -Severity 1 -Message "$($_.Exception.Message)"
+                    }else{
+                        Write-LogEntry -Severity 1 -Message "$($_.Exception)"
+                    }        
+                }
+                Start-Sleep -Seconds 5
+            }while ($null -eq $Token -or $Counter -gt 4) 
+
+            If ($Null -eq $Token){
+                Throw 'Could not get new token please restart with full auth and 2FA'
+            }
+            
+        }finally{
+            #Remove temp token
+            $TokenTemp = $null
+        }
+
+    }
+
+    Return $Token
+}
