@@ -9,6 +9,17 @@ Currently we are in Release state of Version 2.1.1 this versions seems to run st
 
 <h3>Current State:</h3>
 
+- V2.2.0 Release
+- Update to support EVCC 2.0.7 and higher using new API calls
+- Also support older EVCC pre 2.0.6 using old API calls
+- Improved (drastically reduced) Token calls, no longer keeping token hot when not needed.
+  Note you can see negative token life time now in logs this is normal as access token expired and can still be renewed if withen the 7 days volvo allows it.
+
+  - Issues:still maximum of 7 days between reauth needed due to Volvo security restrictions, i am in contact with them to see what we can do here.
+
+
+----
+
 - V2.1.1 Release
 - Complete redesign of OAuth no longer relaying on OTP but true Oauth client flow as per VOLVO documentation. (No more faking the client)
 - Move to V2 API now that V1 is depricated
