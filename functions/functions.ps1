@@ -249,7 +249,10 @@ Function Test-TokenValidity
         $Token = $null
         Try{
             $Token = Get-NewVolvoToken -Token $TokenTemp
+
+            If($Token.Source -eq 'Invalid-Expired'){Throw 'Token still expired could not refresh'}
             Write-LogEntry -Severity 2 -Message 'Token is refreshed succesfully'
+
         } Catch {
             If ($_.Exception.Message){
                 Write-LogEntry -Severity 1 -Message "$($_.Exception.Message)"
@@ -261,6 +264,7 @@ Function Test-TokenValidity
                 $counter++
                 Try{
                     $Token = Get-NewVolvoToken -Token $TokenTemp
+                    If($Token.Source -eq 'Invalid-Expired'){Throw 'Token still expired could not refresh'}
                     Write-LogEntry -Severity 2 -Message "Token is refreshed succesfully on attempt : $counter"
                 } Catch {
                     If ($_.Exception.Message){
@@ -270,9 +274,10 @@ Function Test-TokenValidity
                     }        
                 }
                 Start-Sleep -Seconds 5
-            }while ($null -eq $Token -or $Counter -gt 4) 
+            }while ($null -eq $Token -or $counter -gt 4) 
 
-            If ($Null -eq $Token){
+            If ($Null -eq $Token -or $Token.Source -eq 'Invalid-Expired'){
+                Rename-Item -Path './EncryptedOAuthToken.xml' -NewName './EncryptedOAuthToken_invalid.xml'
                 Throw 'Could not get new token please restart with full auth and 2FA'
             }
             
